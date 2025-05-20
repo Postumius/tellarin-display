@@ -1,0 +1,66 @@
+module NonEmpty exposing (..)
+
+import Json.Encode as E
+import Json.Decode as D exposing (Decoder)
+
+import Utilities as U
+
+type NonEmpty a = NE a (List a)
+
+head (NE x _) = x
+
+toList (NE x xs) = x::xs
+
+foldli : (a->b) -> (a->b->b) -> NonEmpty a -> b
+foldli init recur (NE x xs) =
+  List.foldl recur (init x) xs
+
+foldl recur acc = foldli (U.flip recur acc) recur
+
+singleton x = NE x []
+
+cons x0 (NE x1 xs) = NE x0 (x1::xs)
+
+reverse = foldli singleton cons 
+
+map : (a->b) -> NonEmpty a -> NonEmpty b
+map f (NE x xs) = NE (f x) (List.map f xs)
+
+map2 f (NE x xs) (NE y ys) = NE (f x y) (List.map2 f xs ys)
+
+indexedMap f (NE x xs)= 
+  NE (f 0 x) (List.indexedMap ((+)1 >> f) xs)
+
+search pred = 
+  foldl (\x acc -> 
+    if pred x then Just x else acc
+  ) Nothing
+
+get: Int -> NonEmpty a -> Maybe a
+get i = 
+  indexedMap Tuple.pair >>
+  search (Tuple.first >> (==) i) >>
+  Maybe.map Tuple.second
+
+set i y = 
+  let replacer (j, x) = if i == j then y else x
+  in
+    indexedMap Tuple.pair >>
+    reverse >>
+    foldli 
+      (replacer >> singleton)
+      (replacer >> cons)
+
+encode : (a -> E.Value) -> NonEmpty a -> E.Value
+encode encodeA (NE first rest) =
+  E.object
+    [ ("first", encodeA first)
+    , ("rest", E.list encodeA rest)
+    ]
+
+decoder : Decoder a -> Decoder (NonEmpty a)
+decoder aDecoder = 
+  D.map2 NE
+    (D.field "first" aDecoder)
+    (D.field "rest" <| D.list aDecoder)
+

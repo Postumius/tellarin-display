@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+    />
+    <meta
+      http-equiv="X-Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'"
+    />
+    <style>
+      .flex-row {
+        display: flex;
+        flex-direction: row;
+      }
+      .flex-column {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .button{
+        text-align:left;
+      }
+    </style>
+    <title>Controls</title>
+  </head>
+  <body>
+    <h1>the window that controls</h1>
+    <p>👋</p>
+    <div id="elm-node"></div>
+  </body>
+
+  <script src="../elm-compiled/controls.js"></script>
+
+  <script>
+    var app = Elm.Controls.init({
+      node: document.getElementById('elm-node')
+    });
+
+    app.ports.elmSender.subscribe(model => {
+      window.ipc.controlsSender(model)
+    })
+
+    window.ipc.controlsReceiver(str =>
+      app.ports.elmReceiver.send(str)
+    )
+
+    // app.ports.elmSave.subscribe(model => {
+    //   window.ipc.controlsSave(model)
+    // })
+  </script>
+
+</html>
