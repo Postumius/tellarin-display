@@ -35,13 +35,22 @@ type alias Model =
   , textFields : Dict Key String
   , activeTab : Tab
   , date : Date
+  , nCombatRows : Int
   }
 
 init : () -> ( Model, Cmd msg )
 init _ =
   ( { activeTab = 0
-    , textFields = Dict.singleton "teext" ""
+    , textFields = 
+      Dict.fromList
+        [ ("teext", "")
+        -- , ("name0", "")
+        -- , ("AC0", "")
+        -- , ("name1", "")
+        -- , ("AC1", "")
+        ]
     , date = Date.epoch
+    , nCombatRows = 0
     , focusedDenom = Nothing
     , denomBuffer = ""
     }
@@ -58,6 +67,8 @@ type Msg
   | Save
   | RequestLoad
   | ReceivedLoad D.Value
+  | IncRows
+  | DecRows
 
 port elmSender : E.Value -> Cmd msg
 
@@ -111,6 +122,13 @@ update msg model =
       GotDenomInput str ->
         { model | denomBuffer = str } 
         |> noOp
+      IncRows -> 
+        { model | nCombatRows = model.nCombatRows + 1 }
+        |> send
+      DecRows -> 
+        { model | nCombatRows = model.nCombatRows - 1 }
+        |> send
+
 
 encodeWithCmd : String -> Model -> E.Value
 encodeWithCmd cmdString model = 
@@ -119,15 +137,17 @@ encodeWithCmd cmdString model =
     , ("date", Date.encode model.date)
     , ("activeTab", E.int model.activeTab)
     , ("textFields", E.dict identity E.string model.textFields)
+    , ("nCombatRows", E.int model.nCombatRows)
     ]
 
 decode constructor =
   let
     dInfo =
-      D.map3 constructor
+      D.map4 constructor
         (D.field "textFields" <| D.dict D.string)
         (D.field "activeTab" D.int)
         (D.field "date" Date.decoder)
+        (D.field "nCombatRows" D.int)
   in
     D.decodeValue dInfo
 
@@ -145,7 +165,7 @@ getTextField : Key -> {a | textFields: Dict Key String} -> String
 getTextField key model =
   model.textFields
   |> Dict.get key 
-  |> Maybe.withDefault "key not found"
+  |> Maybe.withDefault ""
 
 
 
@@ -153,7 +173,7 @@ view : Model -> Html Msg
 view model = 
   makeTabView model
     [ ("Now", nowView)
-    , ("ACs", always <| h2 [] [ text "ACs" ])
+    , ("Combat", combatView)
     ]
 
 denomInputView : Int -> Date.TimeDenomination -> Model -> Html Msg
@@ -205,6 +225,35 @@ makeTabView model tabViews =
       |> div []
   in
     div [] [ selector, tabBody]
+
+combatRow model i=
+  let 
+    suffix str = str ++ String.fromInt i
+    name = suffix "name"
+    ac = suffix "AC"
+  in
+    div []
+      [ input 
+          [ placeholder "Enemy Name"
+          , value <| getTextField name model
+          , onInput <| GotTextFor name
+          ] []
+        , input 
+            [ placeholder "Enemy AC"
+            , value <| getTextField ac model
+            , onInput <| GotTextFor ac
+            ] []
+      ]
+
+combatView : Model -> Html Msg
+combatView model =
+  [ h2 [] [ text "Combat" ]
+  , button [ onClick IncRows ] [ text "add row" ]
+  , button [ onClick DecRows ] [ text "remove row" ]
+  ] 
+  ++ (L.range 1 model.nCombatRows |> L.map (combatRow model))
+  |> div []
+  
 
 nowView : Model -> Html Msg
 nowView model =

@@ -25,6 +25,7 @@ type alias DisplayModel =
   { textFields : Dict Key String
   , activeTab : Int
   , date : Date
+  , nCombatRows: Int
   }
 
 
@@ -36,6 +37,7 @@ init _ =
       { activeTab = 0
       , textFields = Dict.singleton "teext" ""
       , date = Date.epoch
+      , nCombatRows = 0
       }
   , Cmd.none
   )
@@ -75,20 +77,39 @@ nowView info =
     , text <| getTextField "teext" info
     , Date.denoms |>
       NE.map (\denom ->
-        div []
-          [ info.date |> denom.getter |> String.fromInt |> text
-          , text (" "++denom.name)
-          ]
+        let
+          n = info.date |> denom.getter
+          str =
+            case denom.base of
+              Just (Date.Names names) -> get n names |> Maybe.withDefault ""
+              _ -> String.fromInt n
+        in
+          div []
+            [ text (denom.name++": ")
+            , text str
+            ]
       ) |>
       NE.toList |>
       div []
     ]
 
-acsView: DisplayModel -> Html Never
-acsView info =
-  div []
-    [ h2 [] [ text "ACs" ]
-    ]
+combatView: DisplayModel -> Html Never
+combatView info =
+  let
+    suffix i str = str ++ (String.fromInt i)
+  in
+    List.range 1 info.nCombatRows
+    |> List.map (\i ->
+      div []
+        [ text (getTextField (suffix i "name") info)
+        , text (getTextField (suffix i "AC") info)
+        ]
+    )
+    |> div []
+
+--   div []
+--     [ h2 [] [ text "ACs" ]
+--     ]
 
 displayView : Result D.Error DisplayModel -> Html Never
 displayView model =
@@ -98,7 +119,7 @@ displayView model =
     Ok info -> 
       get info.activeTab 
         [ nowView
-        , acsView
+        , combatView
         ] |>
       Maybe.withDefault tabErrorView |>
       (|>) info

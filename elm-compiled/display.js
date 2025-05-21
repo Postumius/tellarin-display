@@ -4455,6 +4455,11 @@ var $elm$core$Set$toList = function (_v0) {
 var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
+var $elm$core$Basics$apR = F2(
+	function (x, f) {
+		return f(x);
+	});
+var $elm$core$Basics$append = _Utils_append;
 var $elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -4484,7 +4489,6 @@ var $elm$core$Maybe$Just = function (a) {
 var $elm$core$Maybe$Nothing = {$: 'Nothing'};
 var $elm$core$String$all = _String_all;
 var $elm$core$Basics$and = _Basics_and;
-var $elm$core$Basics$append = _Utils_append;
 var $elm$json$Json$Encode$encode = _Json_encode;
 var $elm$core$String$fromInt = _String_fromNumber;
 var $elm$core$String$join = F2(
@@ -4720,10 +4724,6 @@ var $elm$core$Basics$apL = F2(
 	function (f, x) {
 		return f(x);
 	});
-var $elm$core$Basics$apR = F2(
-	function (x, f) {
-		return f(x);
-	});
 var $elm$core$Basics$eq = _Utils_equal;
 var $elm$core$Basics$floor = _Basics_floor;
 var $elm$core$Elm$JsArray$length = _JsArray_length;
@@ -4866,23 +4866,156 @@ var $elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 	}
 };
 var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $elm$core$Basics$compare = _Utils_compare;
+var $elm$core$Dict$get = F2(
+	function (targetKey, dict) {
+		get:
+		while (true) {
+			if (dict.$ === 'RBEmpty_elm_builtin') {
+				return $elm$core$Maybe$Nothing;
+			} else {
+				var key = dict.b;
+				var value = dict.c;
+				var left = dict.d;
+				var right = dict.e;
+				var _v1 = A2($elm$core$Basics$compare, targetKey, key);
+				switch (_v1.$) {
+					case 'LT':
+						var $temp$targetKey = targetKey,
+							$temp$dict = left;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+					case 'EQ':
+						return $elm$core$Maybe$Just(value);
+					default:
+						var $temp$targetKey = targetKey,
+							$temp$dict = right;
+						targetKey = $temp$targetKey;
+						dict = $temp$dict;
+						continue get;
+				}
+			}
+		}
+	});
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var $author$project$Controls$getTextField = F2(
+	function (key, model) {
+		return A2(
+			$elm$core$Maybe$withDefault,
+			'',
+			A2($elm$core$Dict$get, key, model.textFields));
+	});
+var $elm$core$List$foldrHelper = F4(
+	function (fn, acc, ctr, ls) {
+		if (!ls.b) {
+			return acc;
+		} else {
+			var a = ls.a;
+			var r1 = ls.b;
+			if (!r1.b) {
+				return A2(fn, a, acc);
+			} else {
+				var b = r1.a;
+				var r2 = r1.b;
+				if (!r2.b) {
+					return A2(
+						fn,
+						a,
+						A2(fn, b, acc));
+				} else {
+					var c = r2.a;
+					var r3 = r2.b;
+					if (!r3.b) {
+						return A2(
+							fn,
+							a,
+							A2(
+								fn,
+								b,
+								A2(fn, c, acc)));
+					} else {
+						var d = r3.a;
+						var r4 = r3.b;
+						var res = (ctr > 500) ? A3(
+							$elm$core$List$foldl,
+							fn,
+							acc,
+							$elm$core$List$reverse(r4)) : A4($elm$core$List$foldrHelper, fn, acc, ctr + 1, r4);
+						return A2(
+							fn,
+							a,
+							A2(
+								fn,
+								b,
+								A2(
+									fn,
+									c,
+									A2(fn, d, res))));
+					}
+				}
+			}
+		}
+	});
+var $elm$core$List$foldr = F3(
+	function (fn, acc, ls) {
+		return A4($elm$core$List$foldrHelper, fn, acc, 0, ls);
+	});
+var $elm$core$List$map = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, acc) {
+					return A2(
+						$elm$core$List$cons,
+						f(x),
+						acc);
+				}),
+			_List_Nil,
+			xs);
+	});
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Display$acsView = function (info) {
+var $author$project$Display$combatView = function (info) {
+	var suffix = F2(
+		function (i, str) {
+			return _Utils_ap(
+				str,
+				$elm$core$String$fromInt(i));
+		});
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$h2,
-				_List_Nil,
-				_List_fromArray(
-					[
-						$elm$html$Html$text('ACs')
-					]))
-			]));
+		A2(
+			$elm$core$List$map,
+			function (i) {
+				return A2(
+					$elm$html$Html$div,
+					_List_Nil,
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							A2(
+								$author$project$Controls$getTextField,
+								A2(suffix, i, 'name'),
+								info)),
+							$elm$html$Html$text(
+							A2(
+								$author$project$Controls$getTextField,
+								A2(suffix, i, 'AC'),
+								info))
+						]));
+			},
+			A2($elm$core$List$range, 1, info.nCombatRows)));
 };
 var $author$project$Utilities$foldrP = F3(
 	function (f, bottom, xxs) {
@@ -5054,75 +5187,6 @@ var $author$project$Utilities$getSet = F4(
 			f(
 				getter(obj)));
 	});
-var $elm$core$List$foldrHelper = F4(
-	function (fn, acc, ctr, ls) {
-		if (!ls.b) {
-			return acc;
-		} else {
-			var a = ls.a;
-			var r1 = ls.b;
-			if (!r1.b) {
-				return A2(fn, a, acc);
-			} else {
-				var b = r1.a;
-				var r2 = r1.b;
-				if (!r2.b) {
-					return A2(
-						fn,
-						a,
-						A2(fn, b, acc));
-				} else {
-					var c = r2.a;
-					var r3 = r2.b;
-					if (!r3.b) {
-						return A2(
-							fn,
-							a,
-							A2(
-								fn,
-								b,
-								A2(fn, c, acc)));
-					} else {
-						var d = r3.a;
-						var r4 = r3.b;
-						var res = (ctr > 500) ? A3(
-							$elm$core$List$foldl,
-							fn,
-							acc,
-							$elm$core$List$reverse(r4)) : A4($elm$core$List$foldrHelper, fn, acc, ctr + 1, r4);
-						return A2(
-							fn,
-							a,
-							A2(
-								fn,
-								b,
-								A2(
-									fn,
-									c,
-									A2(fn, d, res))));
-					}
-				}
-			}
-		}
-	});
-var $elm$core$List$foldr = F3(
-	function (fn, acc, ls) {
-		return A4($elm$core$List$foldrHelper, fn, acc, 0, ls);
-	});
-var $elm$core$List$map = F2(
-	function (f, xs) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, acc) {
-					return A2(
-						$elm$core$List$cons,
-						f(x),
-						acc);
-				}),
-			_List_Nil,
-			xs);
-	});
 var $author$project$NonEmpty$map = F2(
 	function (f, _v0) {
 		var x = _v0.a;
@@ -5233,15 +5297,6 @@ var $author$project$NonEmpty$set = F2(
 					A2($elm$core$Basics$composeR, replacer, $author$project$NonEmpty$singleton),
 					A2($elm$core$Basics$composeR, replacer, $author$project$NonEmpty$cons))));
 	});
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 function $author$project$TellarinDate$cyclic$makeDate() {
 	return A2(
 		$elm$core$Basics$composeR,
@@ -5307,45 +5362,7 @@ try {
 	};
 } catch ($) {
 	throw 'Some top-level definitions from `TellarinDate` are causing infinite recursion:\n\n  ┌─────┐\n  │    makeDate\n  │     ↓\n  │    epoch\n  │     ↓\n  │    denoms\n  └─────┘\n\nThese errors are very tricky, so read https://elm-lang.org/0.19.1/bad-recursion to learn how to fix it!';}
-var $elm$core$Basics$compare = _Utils_compare;
-var $elm$core$Dict$get = F2(
-	function (targetKey, dict) {
-		get:
-		while (true) {
-			if (dict.$ === 'RBEmpty_elm_builtin') {
-				return $elm$core$Maybe$Nothing;
-			} else {
-				var key = dict.b;
-				var value = dict.c;
-				var left = dict.d;
-				var right = dict.e;
-				var _v1 = A2($elm$core$Basics$compare, targetKey, key);
-				switch (_v1.$) {
-					case 'LT':
-						var $temp$targetKey = targetKey,
-							$temp$dict = left;
-						targetKey = $temp$targetKey;
-						dict = $temp$dict;
-						continue get;
-					case 'EQ':
-						return $elm$core$Maybe$Just(value);
-					default:
-						var $temp$targetKey = targetKey,
-							$temp$dict = right;
-						targetKey = $temp$targetKey;
-						dict = $temp$dict;
-						continue get;
-				}
-			}
-		}
-	});
-var $author$project$Controls$getTextField = F2(
-	function (key, model) {
-		return A2(
-			$elm$core$Maybe$withDefault,
-			'key not found',
-			A2($elm$core$Dict$get, key, model.textFields));
-	});
+var $elm$html$Html$h2 = _VirtualDom_node('h2');
 var $author$project$NonEmpty$toList = function (_v0) {
 	var x = _v0.a;
 	var xs = _v0.b;
@@ -5373,15 +5390,26 @@ var $author$project$Display$nowView = function (info) {
 					A2(
 						$author$project$NonEmpty$map,
 						function (denom) {
+							var n = denom.getter(info.date);
+							var str = function () {
+								var _v0 = denom.base;
+								if ((_v0.$ === 'Just') && (_v0.a.$ === 'Names')) {
+									var names = _v0.a.a;
+									return A2(
+										$elm$core$Maybe$withDefault,
+										'',
+										A2($author$project$Utilities$get, n, names));
+								} else {
+									return $elm$core$String$fromInt(n);
+								}
+							}();
 							return A2(
 								$elm$html$Html$div,
 								_List_Nil,
 								_List_fromArray(
 									[
-										$elm$html$Html$text(
-										$elm$core$String$fromInt(
-											denom.getter(info.date))),
-										$elm$html$Html$text(' ' + denom.name)
+										$elm$html$Html$text(denom.name + ': '),
+										$elm$html$Html$text(str)
 									]));
 						},
 						$author$project$TellarinDate$denoms)))
@@ -5409,7 +5437,7 @@ var $author$project$Display$displayView = function (model) {
 				$author$project$Utilities$get,
 				info.activeTab,
 				_List_fromArray(
-					[$author$project$Display$nowView, $author$project$Display$acsView])),
+					[$author$project$Display$nowView, $author$project$Display$combatView])),
 			$elm$core$Maybe$withDefault($author$project$Display$tabErrorView),
 			info);
 	}
@@ -5659,6 +5687,7 @@ var $author$project$Display$init = function (_v0) {
 			{
 				activeTab: 0,
 				date: $author$project$TellarinDate$epoch,
+				nCombatRows: 0,
 				textFields: A2($elm$core$Dict$singleton, 'teext', '')
 			}),
 		$elm$core$Platform$Cmd$none);
@@ -5673,9 +5702,9 @@ var $author$project$Display$elmReceiver = _Platform_incomingPort('elmReceiver', 
 var $author$project$Display$subscriptions = function (_v0) {
 	return $author$project$Display$elmReceiver($author$project$Display$Receive);
 };
-var $author$project$Display$DisplayModel = F3(
-	function (textFields, activeTab, date) {
-		return {activeTab: activeTab, date: date, textFields: textFields};
+var $author$project$Display$DisplayModel = F4(
+	function (textFields, activeTab, date, nCombatRows) {
+		return {activeTab: activeTab, date: date, nCombatRows: nCombatRows, textFields: textFields};
 	});
 var $elm$json$Json$Decode$decodeValue = _Json_run;
 var $elm$json$Json$Decode$field = _Json_decodeField;
@@ -5818,18 +5847,19 @@ var $elm$json$Json$Decode$dict = function (decoder) {
 		$elm$core$Dict$fromList,
 		$elm$json$Json$Decode$keyValuePairs(decoder));
 };
-var $elm$json$Json$Decode$map3 = _Json_map3;
+var $elm$json$Json$Decode$map4 = _Json_map4;
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Controls$decode = function (constructor) {
-	var dInfo = A4(
-		$elm$json$Json$Decode$map3,
+	var dInfo = A5(
+		$elm$json$Json$Decode$map4,
 		constructor,
 		A2(
 			$elm$json$Json$Decode$field,
 			'textFields',
 			$elm$json$Json$Decode$dict($elm$json$Json$Decode$string)),
 		A2($elm$json$Json$Decode$field, 'activeTab', $elm$json$Json$Decode$int),
-		A2($elm$json$Json$Decode$field, 'date', $author$project$TellarinDate$decoder));
+		A2($elm$json$Json$Decode$field, 'date', $author$project$TellarinDate$decoder),
+		A2($elm$json$Json$Decode$field, 'nCombatRows', $elm$json$Json$Decode$int));
 	return $elm$json$Json$Decode$decodeValue(dInfo);
 };
 var $author$project$Display$update = F2(

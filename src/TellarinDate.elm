@@ -47,6 +47,13 @@ baseDenominations =
   , ("minute", Number minutesPerHour) 
   ]
 
+-- dateString (Date ne) =
+--   NE.map2 (\denom n ->
+--     (denom.name, (denom.base, n))
+--   ) denoms ne
+--   |> NE.toList
+--   |> Dict.fromList
+
 baseNumbers = 
   baseDenominations |>
   List.map (\(_, base) ->
