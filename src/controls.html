@@ -36,17 +36,17 @@
   <script src="../elm-compiled/controls.js"></script>
 
   <script>
-    var app = Elm.Controls.init({
+    const app = Elm.Controls.init({
       node: document.getElementById('elm-node')
     });
 
     app.ports.elmSender.subscribe(model => {
-      window.ipc.controlsSender(model)
-    })
+      window.ipc.controlsSender(model);
+    });
 
-    window.ipc.controlsReceiver(str =>
-      app.ports.elmReceiver.send(str)
-    )
+    window.ipc.controlsReceiver(model =>
+      app.ports.elmReceiver.send(model);
+    );
 
     // app.ports.elmSave.subscribe(model => {
     //   window.ipc.controlsSave(model)

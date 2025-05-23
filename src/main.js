@@ -1,21 +1,11 @@
 const { app, BrowserWindow, ipcMain } = require('electron/main')
 const path = require('node:path')
-const fs = require ('node:fs/promises')
+const fs = require ('node:fs')
 
-const preloadPath = path.join(__dirname, 'preload.js')
 
-async function save(json) {
-  // fs.writeFile('save-data.json', json, err => {
-  //   if (err) {
-  //     console.error(err);
-  //   }
-  // });
-  try {
-    await fs.writeFile('save-data.json', json)
-  } catch (err) {
-    console.error(err)
-  }
-}
+const preloadPath = path.join(__dirname, 'preload.js');
+
+const savefilePath = path.join(__dirname, '../save-data.json');
 
 
 async function createWindows() {
@@ -25,45 +15,42 @@ async function createWindows() {
     webPreferences: {
       preload: preloadPath
     }
-  })
+  });
+
   const displayWin = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
       preload: preloadPath
     }
-  })
+  });
 
-  async function load() {
-    try {
-      const result = JSON.parse(await fs.readFile('save-data.json', {encoding: 'utf8'}));
-      console.log(result);
-      controlsWin.webContents.send('controls-receive', result);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  ipcMain.on('controls-send', (_event, model) => {
-    switch (model.cmdString) {
+  ipcMain.on('controls-send', (_event, obj) => {
+    switch (obj.cmdString) {
       case "send":
-        displayWin.webContents.send('display-receive', model);
-        break
+        displayWin.webContents.send('display-receive', obj);
+        break;
       case "save":
-        save(JSON.stringify(model));
-        break
+        fs.writeFile(safefilePath, JSON.stringify(obj), err => {
+          if (err) console.error(err);
+        });
+        break;
       case "load":
-        load();
+        fs.readFile(safefilePath, 'utf8', (err, data) => {
+          if (err) console.error(err);
+          controlsWin.webContents.send('controls-receive', JSON.parse(data));
+        });
         break;
     }
-  })
+  });
 
-  controlsWin.loadFile('src/controls.html')
-  displayWin.loadFile('src/display.html')
+  controlsWin.loadFile('src/controls.html');
+  displayWin.loadFile('src/display.html');
 }
 
+
 app.whenReady().then(() => {
-  createWindows()
-})
+  createWindows();
+});
 
 

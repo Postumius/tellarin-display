@@ -5824,25 +5824,13 @@ var $author$project$Controls$update = F2(
 			return _Utils_Tuple2(m, $elm$core$Platform$Cmd$none);
 		};
 		switch (msg.$) {
-			case 'StepDate':
-				var modifier = msg.a;
-				var n = msg.b;
+			case 'ChangeDate':
+				var f = msg.a;
 				return send(
 					_Utils_update(
 						model,
 						{
-							date: A2(
-								modifier,
-								$elm$core$Basics$add(n),
-								model.date)
-						}));
-			case 'SetDate':
-				var setVal = msg.a;
-				return send(
-					_Utils_update(
-						model,
-						{
-							date: setVal(model.date)
+							date: f(model.date)
 						}));
 			case 'Save':
 				return save(model);
@@ -5902,20 +5890,22 @@ var $author$project$Controls$update = F2(
 					_Utils_update(
 						model,
 						{denomBuffer: str}));
-			case 'IncRows':
-				return send(
-					_Utils_update(
-						model,
-						{nCombatRows: model.nCombatRows + 1}));
 			default:
+				var f = msg.a;
 				return send(
 					_Utils_update(
 						model,
-						{nCombatRows: model.nCombatRows - 1}));
+						{
+							nCombatRows: A2(
+								$elm$core$Basics$max,
+								0,
+								f(model.nCombatRows))
+						}));
 		}
 	});
-var $author$project$Controls$DecRows = {$: 'DecRows'};
-var $author$project$Controls$IncRows = {$: 'IncRows'};
+var $author$project$Controls$ChangeNRows = function (a) {
+	return {$: 'ChangeNRows', a: a};
+};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $author$project$Controls$GotTextFor = F2(
 	function (a, b) {
@@ -6040,7 +6030,13 @@ var $author$project$Controls$combatRow = F2(
 					_List_Nil)
 				]));
 	});
+var $author$project$Utilities$dec = function (n) {
+	return n - 1;
+};
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $author$project$Utilities$inc = function (n) {
+	return n + 1;
+};
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -6077,7 +6073,8 @@ var $author$project$Controls$combatView = function (model) {
 					$elm$html$Html$button,
 					_List_fromArray(
 						[
-							$elm$html$Html$Events$onClick($author$project$Controls$IncRows)
+							$elm$html$Html$Events$onClick(
+							$author$project$Controls$ChangeNRows($author$project$Utilities$inc))
 						]),
 					_List_fromArray(
 						[
@@ -6087,7 +6084,8 @@ var $author$project$Controls$combatView = function (model) {
 					$elm$html$Html$button,
 					_List_fromArray(
 						[
-							$elm$html$Html$Events$onClick($author$project$Controls$DecRows)
+							$elm$html$Html$Events$onClick(
+							$author$project$Controls$ChangeNRows($author$project$Utilities$dec))
 						]),
 					_List_fromArray(
 						[
@@ -6203,15 +6201,11 @@ var $author$project$Controls$makeTabView = F2(
 			_List_fromArray(
 				[selector, tabBody]));
 	});
+var $author$project$Controls$ChangeDate = function (a) {
+	return {$: 'ChangeDate', a: a};
+};
 var $author$project$Controls$RequestLoad = {$: 'RequestLoad'};
 var $author$project$Controls$Save = {$: 'Save'};
-var $author$project$Controls$SetDate = function (a) {
-	return {$: 'SetDate', a: a};
-};
-var $author$project$Controls$StepDate = F2(
-	function (a, b) {
-		return {$: 'StepDate', a: a, b: b};
-	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $author$project$Controls$BlurDenom = function (a) {
 	return {$: 'BlurDenom', a: a};
@@ -6391,7 +6385,8 @@ var $author$project$Controls$nowView = function (model) {
 											_List_fromArray(
 												[
 													$elm$html$Html$Events$onClick(
-													A2($author$project$Controls$StepDate, denom.modifier, -1)),
+													$author$project$Controls$ChangeDate(
+														denom.modifier($author$project$Utilities$dec))),
 													$elm$html$Html$Attributes$class('button')
 												]),
 											_List_fromArray(
@@ -6404,7 +6399,8 @@ var $author$project$Controls$nowView = function (model) {
 											_List_fromArray(
 												[
 													$elm$html$Html$Events$onClick(
-													A2($author$project$Controls$StepDate, denom.modifier, 1)),
+													$author$project$Controls$ChangeDate(
+														denom.modifier($author$project$Utilities$inc))),
 													$elm$html$Html$Attributes$class('button')
 												]),
 											_List_fromArray(
@@ -6421,7 +6417,7 @@ var $author$project$Controls$nowView = function (model) {
 													A3(
 														$author$project$Controls$radioButtons,
 														denom.getter(model.date),
-														A2($elm$core$Basics$composeR, denom.setter, $author$project$Controls$SetDate),
+														A2($elm$core$Basics$composeR, denom.setter, $author$project$Controls$ChangeDate),
 														names));
 											} else {
 												return A2(

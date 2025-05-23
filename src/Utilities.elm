@@ -68,3 +68,7 @@ rectangularise filler lists =
       row ++ 
       L.repeat (maxLength - length) filler
     ) lists lengths
+
+inc n = n + 1
+
+dec n = n - 1

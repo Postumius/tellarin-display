@@ -5,6 +5,7 @@ module TellarinDate exposing
   , Base (..)
   , DenomModifier
   , TimeDenomination
+  , dateString
   , denoms
   , epoch
   , plus
@@ -16,6 +17,7 @@ module TellarinDate exposing
 import Json.Encode as E
 import Json.Decode as D exposing (Decoder)
 import Tuple as Tup
+import Dict as Dict exposing (Dict)
 
 import Utilities as U
 import NonEmpty as NE exposing (NonEmpty(..))
@@ -37,22 +39,82 @@ type Date = Date (NonEmpty Int)
 
 type Base = Names (List String) | Number Int
 
+type alias TimeDenomination =
+  { name: String
+  , startAt: Int
+  , base: Maybe Base
+  , getter: Date -> Int
+  , setter: Int -> Date -> Date
+  , modifier: DenomModifier
+  }
+
 overflowDenomination = 
-     "year"
+     ("year",   1)
 baseDenominations =
-  [ ("season", Names seasonNames)
-  , ("cycle" , Number cyclesPerSeason) 
-  , ("day"   , Names dayNames) 
-  , ("hour"  , Number hoursPerDay) 
-  , ("minute", Number minutesPerHour) 
+  [ (("season", 1), Names seasonNames)
+  , (("cycle" , 1), Number cyclesPerSeason) 
+  , (("day"   , 1), Names dayNames) 
+  , (("hour"  , 0), Number hoursPerDay) 
+  , (("minute", 0), Number minutesPerHour) 
   ]
 
--- dateString (Date ne) =
---   NE.map2 (\denom n ->
---     (denom.name, (denom.base, n))
---   ) denoms ne
---   |> NE.toList
---   |> Dict.fromList
+denoms = 
+  NE
+    (overflowDenomination, Nothing)
+    (List.map (Tuple.mapSecond Just) baseDenominations) |>
+  NE.indexedMap (\i ((name, startAt), base) ->
+    let
+      getter (Date ne) = 
+        NE.get i ne 
+        |> Maybe.map ((+) startAt)
+        |> Maybe.withDefault -1
+      setter x (Date ne) = NE.set (i-startAt) x ne |> makeDate
+    in 
+      TimeDenomination name startAt base getter setter (U.getSet getter setter)
+  )
+
+dateString (Date ne) =
+  let
+    stringDict =
+      NE.map2 (\denom n ->
+        ( denom.name
+        , case denom.base of
+            Just (Names names) -> 
+              names 
+              |> U.get n
+              |> Maybe.withDefault "(number out of range)"
+            _ -> n + denom.startAt |> String.fromInt
+        )
+      ) denoms ne
+      |> NE.toList
+      |> Dict.fromList
+    d name = 
+      Dict.get name stringDict
+      |> Maybe.withDefault "(denom not found!)"
+    suffix str = 
+      str ++
+      if String.slice -2 -1 str == "1" then
+        "th"
+      else if String.endsWith "1" str then
+        "st"
+      else if String.endsWith "2" str then
+        "nd"
+      else if String.endsWith "3" str then
+        "rd"
+      else
+        "th"
+  in
+    suffix (d "cycle")
+    ++ " "
+    ++ d "day"
+    ++ " of "
+    ++ d "season"
+    ++ ", "
+    ++ suffix (d "year")
+    ++ " YoR, "
+    ++ d "hour"
+    ++ ":"
+    ++ d "minute"
 
 baseNumbers = 
   baseDenominations |>
@@ -63,26 +125,6 @@ baseNumbers =
   ) 
 
 type alias DenomModifier = (Int -> Int) -> Date -> Date
-
-type alias TimeDenomination =
-  { name: String
-  , base: Maybe Base
-  , getter: Date -> Int
-  , setter: Int -> Date -> Date
-  , modifier: DenomModifier
-  }
-
-denoms = 
-  NE
-    (overflowDenomination, Nothing)
-    (List.map (Tuple.mapSecond Just) baseDenominations) |>
-  NE.indexedMap (\i (name, base) ->
-    let
-      getter = \(Date ne) -> NE.get i ne |> Maybe.withDefault -1
-      setter = \x (Date ne) -> NE.set i x ne |> makeDate
-    in 
-      TimeDenomination name base getter setter (U.getSet getter setter)
-  )
 
 epoch : Date
 epoch = 

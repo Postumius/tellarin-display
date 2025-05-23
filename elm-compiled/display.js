@@ -5007,7 +5007,7 @@ var $author$project$Display$combatView = function (info) {
 							A2(
 								$author$project$Controls$getTextField,
 								A2(suffix, i, 'name'),
-								info)),
+								info) + '  '),
 							$elm$html$Html$text(
 							A2(
 								$author$project$Controls$getTextField,

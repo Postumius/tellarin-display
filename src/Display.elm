@@ -101,7 +101,7 @@ combatView info =
     List.range 1 info.nCombatRows
     |> List.map (\i ->
       div []
-        [ text (getTextField (suffix i "name") info)
+        [ text (getTextField (suffix i "name") info ++ "  ")
         , text (getTextField (suffix i "AC") info)
         ]
     )

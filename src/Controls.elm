@@ -44,10 +44,6 @@ init _ =
     , textFields = 
       Dict.fromList
         [ ("teext", "")
-        -- , ("name0", "")
-        -- , ("AC0", "")
-        -- , ("name1", "")
-        -- , ("AC1", "")
         ]
     , date = Date.epoch
     , nCombatRows = 0
@@ -59,16 +55,14 @@ init _ =
 type Msg 
   = SwitchTo Tab
   | GotTextFor Key String
-  | StepDate Date.DenomModifier Int
-  | SetDate (Date -> Date)
+  | ChangeDate (Date -> Date)
   | FocusDenom Int
   | BlurDenom (Date -> Date)
   | GotDenomInput String
   | Save
   | RequestLoad
   | ReceivedLoad D.Value
-  | IncRows
-  | DecRows
+  | ChangeNRows (Int -> Int)
 
 port elmSender : E.Value -> Cmd msg
 
@@ -87,11 +81,8 @@ update msg model =
     noOp m = (m, Cmd.none)
   in
     case msg of
-      StepDate modifier n ->
-        {model | date = model.date |> modifier ((+) n)} 
-        |> send
-      SetDate setVal ->
-        {model | date = model.date |> setVal} 
+      ChangeDate f ->
+        {model | date = model.date |> f} 
         |> send
       Save ->
         model 
@@ -122,11 +113,8 @@ update msg model =
       GotDenomInput str ->
         { model | denomBuffer = str } 
         |> noOp
-      IncRows -> 
-        { model | nCombatRows = model.nCombatRows + 1 }
-        |> send
-      DecRows -> 
-        { model | nCombatRows = model.nCombatRows - 1 }
+      ChangeNRows f -> 
+        { model | nCombatRows = Basics.max 0 <| f model.nCombatRows }
         |> send
 
 
@@ -182,9 +170,6 @@ denomInputView i denom model =
     denomVal = model.date |> denom.getter
   in
     input
-      -- [ value <| String.fromInt n
-      -- , onInput (String.toInt >> Maybe.withDefault n >> denom.setter >> SetDate)
-      -- ]
       [ placeholder <| String.fromInt denomVal
       , onFocus <| FocusDenom i
       , value <| if Just i == model.focusedDenom then model.denomBuffer else ""
@@ -248,8 +233,8 @@ combatRow model i=
 combatView : Model -> Html Msg
 combatView model =
   [ h2 [] [ text "Combat" ]
-  , button [ onClick IncRows ] [ text "add row" ]
-  , button [ onClick DecRows ] [ text "remove row" ]
+  , button [ onClick (ChangeNRows U.inc) ] [ text "add row" ]
+  , button [ onClick (ChangeNRows U.dec) ] [ text "remove row" ]
   ] 
   ++ (L.range 1 model.nCombatRows |> L.map (combatRow model))
   |> div []
@@ -270,17 +255,17 @@ nowView model =
       |> NE.toList 
       |> L.indexedMap (\i denom ->
         [ button 
-          [ onClick (StepDate denom.modifier -1)
+          [ onClick (ChangeDate <| denom.modifier U.dec)
           , class "button" 
           ] [ "-1 "++denom.name |> text]
         , denomInputView i denom model
         , button 
-            [ onClick (StepDate denom.modifier 1) 
+            [ onClick (ChangeDate <| denom.modifier U.inc) 
             , class "button"
             ] [ "+1 "++denom.name |> text ]
         , case denom.base of
             Just (Date.Names names) -> 
-              radioButtons (denom.getter model.date) (denom.setter >> SetDate) names 
+              radioButtons (denom.getter model.date) (denom.setter >> ChangeDate) names 
               |> div []
             _ -> div [] [text "placeholder"]
         ]
