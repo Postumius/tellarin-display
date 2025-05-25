@@ -63,6 +63,8 @@ type Msg
   | RequestLoad
   | ReceivedLoad D.Value
   | ChangeNRows (Int -> Int)
+  | Show
+  | Hide
 
 port elmSender : E.Value -> Cmd msg
 
@@ -76,30 +78,34 @@ update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
   let
     out encode m = (m, m |> encode |> elmSender)
-    send = out (encodeWithCmd "send")
-    save = out (encodeWithCmd "save")
+    sendToDisplay = out (encodeWithCmd "send")
     noOp m = (m, Cmd.none)
+    command str = 
+      [("cmdString", E.string str)]
+      |> E.object
+      |> elmSender
   in
     case msg of
       ChangeDate f ->
         {model | date = model.date |> f} 
-        |> send
+        |> sendToDisplay
       Save ->
         model 
-        |> save
+        |> out (encodeWithCmd "save")
       RequestLoad -> 
-        model
-        |> out (always <| E.object [("cmdString", E.string "load")])
+        ( model
+        , command "load"
+        )
       ReceivedLoad json -> 
         model
         |> mergeLoaded json
-        |> send
+        |> sendToDisplay
       SwitchTo tab ->
         {model | activeTab=tab} 
-        |> send
+        |> sendToDisplay
       GotTextFor key str ->
         updateTextFields (Dict.insert key str) model
-        |> send
+        |> sendToDisplay
       FocusDenom i ->
         { model | focusedDenom = Just i }
         |> updateTextFields (Dict.insert "denomBuffer" "")
@@ -109,13 +115,17 @@ update msg model =
         | focusedDenom = Nothing
         , date = model.date |> setVal
         } 
-        |> send
+        |> sendToDisplay
       GotDenomInput str ->
         { model | denomBuffer = str } 
         |> noOp
       ChangeNRows f -> 
         { model | nCombatRows = Basics.max 0 <| f model.nCombatRows }
-        |> send
+        |> sendToDisplay
+      Show ->
+        (model, command "show")
+      Hide ->
+        (model, command "hide")
 
 
 encodeWithCmd : String -> Model -> E.Value
@@ -159,9 +169,21 @@ getTextField key model =
 
 view : Model -> Html Msg
 view model = 
-  makeTabView model
-    [ ("Now", nowView)
-    , ("Combat", combatView)
+  div [] 
+    [ h2 [] [ text <| Date.toString model.date ]
+    , button [ onClick Save ] [ text "save" ]
+    , button [ onClick RequestLoad ] [ text "load" ]
+    , button [ onClick Show ] [ text "show" ]
+    , button [ onClick Hide ] [ text "hide" ]
+    , input 
+        [ placeholder "enter teext"
+        , value <| getTextField "teext" model
+        , onInput <| GotTextFor "teext" 
+        ] []
+    , makeTabView model
+      [ ("Now", nowView)
+      , ("Combat", combatView)
+      ]
     ]
 
 denomInputView : Int -> Date.TimeDenomination -> Model -> Html Msg
@@ -211,6 +233,34 @@ makeTabView model tabViews =
   in
     div [] [ selector, tabBody]
 
+nowView : Model -> Html Msg
+nowView model =
+  div []
+    [ h2 [] [ text "Now" ]
+    , Date.denoms 
+      |> NE.toList 
+      |> L.indexedMap (\i denom ->
+        [ button 
+          [ onClick (ChangeDate <| denom.modifier U.dec)
+          , class "button" 
+          ] [ "-1 "++denom.name |> text]
+        , denomInputView i denom model
+        , button 
+            [ onClick (ChangeDate <| denom.modifier U.inc) 
+            , class "button"
+            ] [ "+1 "++denom.name |> text ]
+        , case denom.base of
+            Just (Date.Names names) -> 
+              radioButtons (model.date |> denom.getter |> U.dec) (U.inc >> denom.setter >> ChangeDate) names 
+              |> div []
+            _ -> div [] [text "placeholder"]
+        ]
+      )
+      |> U.transpose 
+      |> L.map (div [class "flex-column"]) 
+      |> div [class "flex-row"]
+    ]
+
 combatRow model i=
   let 
     suffix str = str ++ String.fromInt i
@@ -238,39 +288,3 @@ combatView model =
   ] 
   ++ (L.range 1 model.nCombatRows |> L.map (combatRow model))
   |> div []
-  
-
-nowView : Model -> Html Msg
-nowView model =
-  div []
-    [ h2 [] [ text "Now" ]
-    , button [ onClick Save ] [ text "save" ]
-    , button [ onClick RequestLoad ] [ text "load" ]
-    , input 
-        [ placeholder "enter teext"
-        , value <| getTextField "teext" model
-        , onInput <| GotTextFor "teext" 
-        ] []
-    , Date.denoms 
-      |> NE.toList 
-      |> L.indexedMap (\i denom ->
-        [ button 
-          [ onClick (ChangeDate <| denom.modifier U.dec)
-          , class "button" 
-          ] [ "-1 "++denom.name |> text]
-        , denomInputView i denom model
-        , button 
-            [ onClick (ChangeDate <| denom.modifier U.inc) 
-            , class "button"
-            ] [ "+1 "++denom.name |> text ]
-        , case denom.base of
-            Just (Date.Names names) -> 
-              radioButtons (denom.getter model.date) (denom.setter >> ChangeDate) names 
-              |> div []
-            _ -> div [] [text "placeholder"]
-        ]
-      )
-      |> U.transpose 
-      |> L.map (div [class "flex-column"]) 
-      |> div [class "flex-row"]
-    ]

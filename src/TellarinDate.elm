@@ -5,7 +5,7 @@ module TellarinDate exposing
   , Base (..)
   , DenomModifier
   , TimeDenomination
-  , dateString
+  , toString
   , denoms
   , epoch
   , plus
@@ -68,12 +68,12 @@ denoms =
         NE.get i ne 
         |> Maybe.map ((+) startAt)
         |> Maybe.withDefault -1
-      setter x (Date ne) = NE.set (i-startAt) x ne |> makeDate
+      setter n (Date ne) = NE.set i (n - startAt) ne |> makeDate
     in 
       TimeDenomination name startAt base getter setter (U.getSet getter setter)
   )
 
-dateString (Date ne) =
+toString (Date ne) =
   let
     stringDict =
       NE.map2 (\denom n ->
@@ -103,6 +103,8 @@ dateString (Date ne) =
         "rd"
       else
         "th"
+    padWithZeros str = 
+      String.repeat (2 - String.length str) "0" ++ str
   in
     suffix (d "cycle")
     ++ " "
@@ -112,9 +114,9 @@ dateString (Date ne) =
     ++ ", "
     ++ suffix (d "year")
     ++ " YoR, "
-    ++ d "hour"
+    ++ padWithZeros (d "hour")
     ++ ":"
-    ++ d "minute"
+    ++ padWithZeros (d "minute")
 
 baseNumbers = 
   baseDenominations |>

@@ -31,15 +31,21 @@ async function createWindows() {
         displayWin.webContents.send('display-receive', obj);
         break;
       case "save":
-        fs.writeFile(safefilePath, JSON.stringify(obj), err => {
+        fs.writeFile(savefilePath, JSON.stringify(obj), err => {
           if (err) console.error(err);
         });
         break;
       case "load":
-        fs.readFile(safefilePath, 'utf8', (err, data) => {
+        fs.readFile(savefilePath, 'utf8', (err, data) => {
           if (err) console.error(err);
           controlsWin.webContents.send('controls-receive', JSON.parse(data));
         });
+        break;
+      case "show":
+        displayWin.show();
+        break;
+      case "hide":
+        displayWin.hide();
         break;
     }
   });

@@ -75,41 +75,25 @@ nowView info =
   div []
     [ h2 [] [ text "Now" ]
     , text <| getTextField "teext" info
-    , Date.denoms |>
-      NE.map (\denom ->
-        let
-          n = info.date |> denom.getter
-          str =
-            case denom.base of
-              Just (Date.Names names) -> get n names |> Maybe.withDefault ""
-              _ -> String.fromInt n
-        in
-          div []
-            [ text (denom.name++": ")
-            , text str
-            ]
-      ) |>
-      NE.toList |>
-      div []
+    , text <| Date.toString info.date
     ]
 
 combatView: DisplayModel -> Html Never
 combatView info =
   let
     suffix i str = str ++ (String.fromInt i)
+    rows =
+      List.range 1 info.nCombatRows
+      |> List.map (\i ->
+        div []
+          [ text (getTextField (suffix i "name") info ++ "  ")
+          , text (getTextField (suffix i "AC") info)
+          ]
+      )
   in
-    List.range 1 info.nCombatRows
-    |> List.map (\i ->
-      div []
-        [ text (getTextField (suffix i "name") info ++ "  ")
-        , text (getTextField (suffix i "AC") info)
-        ]
-    )
+    [ h2 [] [ text "Combat" ] ]
+    ++ rows
     |> div []
-
---   div []
---     [ h2 [] [ text "ACs" ]
---     ]
 
 displayView : Result D.Error DisplayModel -> Html Never
 displayView model =

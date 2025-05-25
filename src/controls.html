@@ -44,9 +44,9 @@
       window.ipc.controlsSender(model);
     });
 
-    window.ipc.controlsReceiver(model =>
+    window.ipc.controlsReceiver(model => {
       app.ports.elmReceiver.send(model);
-    );
+    });
 
     // app.ports.elmSave.subscribe(model => {
     //   window.ipc.controlsSave(model)
