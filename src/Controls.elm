@@ -170,8 +170,7 @@ getTextField key model =
 view : Model -> Html Msg
 view model = 
   div [] 
-    [ h2 [] [ text <| Date.toString model.date ]
-    , button [ onClick Save ] [ text "save" ]
+    [ button [ onClick Save ] [ text "save" ]
     , button [ onClick RequestLoad ] [ text "load" ]
     , button [ onClick Show ] [ text "show" ]
     , button [ onClick Hide ] [ text "hide" ]
@@ -180,6 +179,7 @@ view model =
         , value <| getTextField "teext" model
         , onInput <| GotTextFor "teext" 
         ] []
+    , hr [] [] 
     , makeTabView model
       [ ("Now", nowView)
       , ("Combat", combatView)
@@ -236,7 +236,7 @@ makeTabView model tabViews =
 nowView : Model -> Html Msg
 nowView model =
   div []
-    [ h2 [] [ text "Now" ]
+    [ h2 [] [ text <| Date.toString model.date ]
     , Date.denoms 
       |> NE.toList 
       |> L.indexedMap (\i denom ->
