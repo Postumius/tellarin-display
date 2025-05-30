@@ -72,3 +72,10 @@ rectangularise filler lists =
 inc n = n + 1
 
 dec n = n - 1
+
+minus n m = m - n
+
+aloneInside container item = 
+  item 
+  |> L.singleton 
+  |> container

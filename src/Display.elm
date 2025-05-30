@@ -2,14 +2,13 @@ port module Display exposing (..)
 
 import Browser
 import Html exposing (..)
+import Html.Attributes exposing (class)
 import Json.Decode as D
 import Maybe
-import Result
 import Dict exposing (Dict)
-import Array as Arr exposing (Array)
 
 import Controls exposing (..)
-import Utilities exposing (..)
+import Utilities as U
 import TellarinDate as Date exposing (Date)
 import NonEmpty as NE exposing (NonEmpty(..))
 
@@ -45,19 +44,8 @@ init _ =
 type Msg 
   = Receive D.Value 
 
--- decode : D.Value -> Model
--- decode =
---   let
---     dInfo =
---       D.map3 Info
---         (D.field "activeTab" D.int)
---         (D.field "textFields" <| D.dict D.string)
---         (D.field "date" Date.decoder)
---   in
---     D.decodeValue dInfo
-
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg _ =
   case msg of
     Receive modelVal ->
       (decode DisplayModel modelVal, Cmd.none)
@@ -70,12 +58,21 @@ subscriptions _ =
 
 tabErrorView _ = text "active tab not found"
 
-nowView: DisplayModel -> Html Never
-nowView info =
-  div []
-    [ h2 [] [ text "Now" ]
+adventureView: DisplayModel -> Html Never
+adventureView info =
+  div [ class "flex-column" ]
+    [ h2 [] [ text <| Date.toString info.date ]
     , text <| getTextField "teext" info
-    , text <| Date.toString info.date
+    , Date.dayNames 
+      |> List.indexedMap (\i day ->
+         text (day) 
+         |> U.aloneInside (
+            if Just i == Date.get "day" info.date
+            then mark []
+            else div []
+         )
+      ) 
+      |> div [ class "flex-row", class "stretch-item" ]  
     ]
 
 combatView: DisplayModel -> Html Never
@@ -91,9 +88,9 @@ combatView info =
           ]
       )
   in
-    [ h2 [] [ text "Combat" ] ]
-    ++ rows
-    |> div []
+    h2 [] [ text "Combat" ]
+    :: rows
+    |> div [ class "flex-column" ]
 
 displayView : Result D.Error DisplayModel -> Html Never
 displayView model =
@@ -101,8 +98,8 @@ displayView model =
     Err e ->
       div [] [ e |> D.errorToString |> text ]
     Ok info -> 
-      get info.activeTab 
-        [ nowView
+      U.get info.activeTab 
+        [ adventureView
         , combatView
         ] |>
       Maybe.withDefault tabErrorView |>

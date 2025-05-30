@@ -19,7 +19,7 @@
       .flex-column {
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: space-around;
       }
       .button{
         text-align:left;
@@ -47,10 +47,6 @@
     window.ipc.controlsReceiver(model => {
       app.ports.elmReceiver.send(model);
     });
-
-    // app.ports.elmSave.subscribe(model => {
-    //   window.ipc.controlsSave(model)
-    // })
   </script>
 
 </html>

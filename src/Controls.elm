@@ -181,7 +181,7 @@ view model =
         ] []
     , hr [] [] 
     , makeTabView model
-      [ ("Now", nowView)
+      [ ("Calendar", calenderView)
       , ("Combat", combatView)
       ]
     ]
@@ -189,7 +189,7 @@ view model =
 denomInputView : Int -> Date.TimeDenomination -> Model -> Html Msg
 denomInputView i denom model =
   let 
-    denomVal = model.date |> denom.getter
+    denomVal = model.date |> Date.startGetter denom
   in
     input
       [ placeholder <| String.fromInt denomVal
@@ -200,7 +200,7 @@ denomInputView i denom model =
           model.denomBuffer 
           |> String.toInt 
           |> Maybe.withDefault denomVal 
-          |> denom.setter
+          |> Date.startSetter denom
         )
       ] []
 
@@ -228,33 +228,34 @@ makeTabView model tabViews =
       |> Maybe.map Tuple.second 
       |> Maybe.withDefault (always <| text "active tab not found") 
       |> (|>) model 
-      |> L.singleton 
-      |> div []
+      |> U.aloneInside (div [])
   in
     div [] [ selector, tabBody]
 
-nowView : Model -> Html Msg
-nowView model =
+calenderView : Model -> Html Msg
+calenderView model =
   div []
     [ h2 [] [ text <| Date.toString model.date ]
     , Date.denoms 
       |> NE.toList 
       |> L.indexedMap (\i denom ->
-        [ button 
-          [ onClick (ChangeDate <| denom.modifier U.dec)
-          , class "button" 
-          ] [ "-1 "++denom.name |> text]
-        , denomInputView i denom model
-        , button 
-            [ onClick (ChangeDate <| denom.modifier U.inc) 
-            , class "button"
-            ] [ "+1 "++denom.name |> text ]
-        , case denom.base of
-            Just (Date.Names names) -> 
-              radioButtons (model.date |> denom.getter |> U.dec) (U.inc >> denom.setter >> ChangeDate) names 
-              |> div []
-            _ -> div [] [text "placeholder"]
-        ]
+         [ button 
+           [ onClick (ChangeDate <| denom.modifier U.dec)
+           , class "button" 
+           ] [ "-1 "++denom.name |> text]
+         , button 
+             [ onClick (ChangeDate <| denom.modifier U.inc) 
+             , class "button"
+             ] [ "+1 "++denom.name |> text ]
+         , case denom.base of
+             Just (Date.Names names) -> 
+               radioButtons 
+                 (model.date |> Date.startGetter denom |> U.dec)
+                 (U.inc >> Date.startSetter denom >> ChangeDate)
+                 names 
+               |> div []
+             _ -> denomInputView i denom model
+         ]
       )
       |> U.transpose 
       |> L.map (div [class "flex-column"]) 

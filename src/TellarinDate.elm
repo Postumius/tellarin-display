@@ -5,6 +5,9 @@ module TellarinDate exposing
   , Base (..)
   , DenomModifier
   , TimeDenomination
+  , get
+  , startGetter
+  , startSetter
   , toString
   , denoms
   , epoch
@@ -58,6 +61,7 @@ baseDenominations =
   , (("minute", 0), Number minutesPerHour) 
   ]
 
+denoms : NonEmpty (TimeDenomination)
 denoms = 
   NE
     (overflowDenomination, Nothing)
@@ -66,12 +70,30 @@ denoms =
     let
       getter (Date ne) = 
         NE.get i ne 
-        |> Maybe.map ((+) startAt)
+        -- |> Maybe.map ((+) startAt)
         |> Maybe.withDefault -1
-      setter n (Date ne) = NE.set i (n - startAt) ne |> makeDate
+      setter n (Date ne) = 
+        NE.set i n ne -- (n - startAt) ne 
+        |> makeDate
     in 
       TimeDenomination name startAt base getter setter (U.getSet getter setter)
   )
+
+denomsIndex = 
+  denoms
+  |> NE.toList
+  |> List.indexedMap (\i denom -> (denom.name, i))
+  |> Dict.fromList
+
+get name date = 
+  denomsIndex 
+  |> Dict.get name
+  |> Maybe.andThen (U.flip NE.get denoms)
+  |> Maybe.map (.getter >> (|>) date)
+
+startGetter denom = denom.getter >> (+) denom.startAt
+
+startSetter denom n = denom.setter (n - denom.startAt)
 
 toString (Date ne) =
   let
@@ -112,7 +134,7 @@ toString (Date ne) =
     ++ " of "
     ++ d "season"
     ++ ", "
-    ++ suffix (d "year")
+    ++ d "year"
     ++ " YoR, "
     ++ padWithZeros (d "hour")
     ++ ":"
