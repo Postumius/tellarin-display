@@ -5,7 +5,7 @@ const fs = require ('node:fs')
 
 const preloadPath = path.join(__dirname, 'preload.js');
 
-const savefilePath = path.join(__dirname, '../save-data.json');
+const savefilePath = path.join(__dirname, '../../save-data.json');
 
 
 async function createWindows() {
