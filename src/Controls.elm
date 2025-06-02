@@ -186,6 +186,13 @@ view model =
       ]
     ]
 
+textField name model = 
+  input 
+    [ placeholder <| "enter " ++ name
+    , value <| getTextField name model
+    , onInput <| GotTextFor name 
+    ] []
+
 denomInputView : Int -> Date.TimeDenomination -> Model -> Html Msg
 denomInputView i denom model =
   let 
@@ -260,6 +267,14 @@ calenderView model =
       |> U.transpose 
       |> L.map (div [class "flex-column"]) 
       |> div [class "flex-row"]
+    , div [] 
+      [ text <| "Weather: "
+      , textField "weather" model
+      ]
+    , div [] 
+      [ text <| "Location: "
+      , textField "location" model
+      ]
     ]
 
 combatRow model i=

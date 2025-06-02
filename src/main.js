@@ -37,8 +37,11 @@ async function createWindows() {
         break;
       case "load":
         fs.readFile(savefilePath, 'utf8', (err, data) => {
-          if (err) console.error(err);
-          controlsWin.webContents.send('controls-receive', JSON.parse(data));
+          if (err) {
+	    console.error(err);
+	  } else {
+	  controlsWin.webContents.send('controls-receive', JSON.parse(data));
+	  }
         });
         break;
       case "show":

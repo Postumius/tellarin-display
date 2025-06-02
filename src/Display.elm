@@ -58,21 +58,29 @@ subscriptions _ =
 
 tabErrorView _ = text "active tab not found"
 
-adventureView: DisplayModel -> Html Never
-adventureView info =
+calendarView: DisplayModel -> Html Never
+calendarView info =
   div [ class "flex-column" ]
-    [ h2 [] [ text <| Date.toString info.date ]
+    [ h1 [] [ text <| Date.toString info.date ]
     , text <| getTextField "teext" info
-    , Date.dayNames 
-      |> List.indexedMap (\i day ->
-         text (day) 
-         |> U.aloneInside (
-            if Just i == Date.get "day" info.date
-            then mark []
-            else div []
-         )
-      ) 
-      |> div [ class "flex-row", class "stretch-item" ]  
+    , div [ class "flex-row", class "stretch-item" ]  
+      ( Date.dayNames 
+        |> List.indexedMap (\i day ->
+           text (day) 
+           |> U.aloneInside (h3 [])
+           |> U.aloneInside (
+              if Just i == Date.get "day" info.date
+              then mark []
+              else div []
+           )
+        ) 
+      )
+    , [ [ h2[] [text "Weather: "], h2[] [text <| getTextField "weather" info ]]
+      , [ h2[] [text "Location: "], h2[] [text <| getTextField "location" info ]]
+      ]
+      |> U.transpose
+      |> List.map (div [ class "flex-column" ])
+      |> div [ class "flex-row" ]
     ]
 
 combatView: DisplayModel -> Html Never
@@ -82,15 +90,20 @@ combatView info =
     rows =
       List.range 1 info.nCombatRows
       |> List.map (\i ->
-        div []
-          [ text (getTextField (suffix i "name") info ++ "  ")
-          , text (getTextField (suffix i "AC") info)
+          [ h3[][text (getTextField (suffix i "name") info ++ "  ")]
+          , h3[][text (getTextField (suffix i "AC") info)]
           ]
       )
   in
-    h2 [] [ text "Combat" ]
-    :: rows
-    |> div [ class "flex-column" ]
+    div [ class "flex-column" ]
+      [ h2 [] [ text "Combat" ]
+      , div [ class "flex-row" ] (
+          [ h3[][text "Character"], h3[][text "AC" ]]
+          :: rows
+          |> U.transpose
+          |> List.map (div [ class "flex-column" ])
+        )
+      ]
 
 displayView : Result D.Error DisplayModel -> Html Never
 displayView model =
@@ -99,7 +112,7 @@ displayView model =
       div [] [ e |> D.errorToString |> text ]
     Ok info -> 
       U.get info.activeTab 
-        [ adventureView
+        [ calendarView
         , combatView
         ] |>
       Maybe.withDefault tabErrorView |>
