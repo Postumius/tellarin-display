@@ -3,6 +3,8 @@ module Utilities exposing
   )
 
 import List as L
+import Html as H exposing (Html, Attribute)
+import Html.Attributes as A
 
 foldrP : (a -> (() -> b) -> b) -> b -> List a -> b
 foldrP f bottom xxs =
@@ -79,3 +81,27 @@ aloneInside container item =
   item 
   |> L.singleton 
   |> container
+
+wrapWith containers item =
+  List.foldr aloneInside item containers
+
+table :  
+    { headerWrap: (List (Html msg) -> Html msg)
+    , bodyWrap: (List (Html msg) -> Html msg) 
+    , attributes: List (Attribute msg) 
+    , rows: List (List (Html msg))
+    }
+    -> Html msg
+table args =
+  H.table args.attributes
+  <| L.indexedMap (\i row ->
+     row
+     |> L.map (
+        wrapWith
+          [ H.td [] 
+          , if i == 0 then args.headerWrap else args.bodyWrap
+          ]
+     )
+     |> H.tr []
+  ) args.rows
+

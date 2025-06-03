@@ -86,23 +86,27 @@ calendarView info =
 combatView: DisplayModel -> Html Never
 combatView info =
   let
-    suffix i str = str ++ (String.fromInt i)
-    rows =
-      List.range 1 info.nCombatRows
-      |> List.map (\i ->
-          [ h3[][text (getTextField (suffix i "name") info ++ "  ")]
-          , h3[][text (getTextField (suffix i "AC") info)]
-          ]
-      )
+    indexedGet str i = 
+      getTextField (str ++ String.fromInt i) info
   in
     div [ class "flex-column" ]
       [ h2 [] [ text "Combat" ]
-      , div [ class "flex-row" ] (
-          [ h3[][text "Character"], h3[][text "AC" ]]
-          :: rows
-          |> U.transpose
-          |> List.map (div [ class "flex-column" ])
-        )
+      , U.table 
+        { headerWrap = h2 []
+        , bodyWrap = h3 []
+        , attributes = []
+        , rows = 
+          [ text "Character"
+          , text "AC"
+          ]
+          :: (
+             List.range 1 info.nCombatRows |> List.map (\i ->
+               [ text <| indexedGet "name" i
+               , text <| indexedGet "AC" i
+               ]
+             )
+          )
+        }
       ]
 
 displayView : Result D.Error DisplayModel -> Html Never
