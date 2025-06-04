@@ -85,14 +85,14 @@ aloneInside container item =
 wrapWith containers item =
   List.foldr aloneInside item containers
 
+type Orientation = RowFirst | ColFirst
+
 type alias TableParams msg =
-    { headerWrap: (List (Html msg) -> Html msg)
-    , bodyWrap: (List (Html msg) -> Html msg) 
-    , tableAttrs: List (Attribute msg) 
-    , rowAttrs: List (Attribute msg) 
-    , cellAttrs: List (Attribute msg) 
-    , header: List (Html msg)
-    , rows: List (List (Html msg))
+    { tableAttrs: List (Attribute msg) 
+    , headerAttrs: List (Attribute msg) 
+    , bodyAttrs: List (Attribute msg) 
+    , orientation: Orientation
+    , matrix: List (List (Html msg))
     }
 
 table : (TableParams msg -> TableParams msg) -> Html msg
@@ -100,23 +100,37 @@ table modify =
   let 
     defaultParams =
       TableParams
-        (H.div[])
-        (H.div[])
         []
         []
         []
-        []
+        RowFirst
         []
     args = modify defaultParams
-    makeRowCells wrap contents =
-      contents
-      |> L.map (
-         wrapWith [ H.td args.cellAttrs, wrap ]
-      )
   in
     H.table args.tableAttrs (
-      makeRowCells args.headerWrap args.header
-      :: L.map (makeRowCells args.bodyWrap) args.rows
-      |> L.filter (not << List.isEmpty)
-      |> L.map (H.tr args.rowAttrs)
+      args.matrix
+      |> L.indexedMap (\i ls -> 
+         ls
+         |> L.map (
+            wrapWith 
+              [ H.td (args |> if i == 0 then .headerAttrs else .bodyAttrs)
+              ]
+         )
+      )
+      |> (case args.orientation of 
+            RowFirst -> identity
+            ColFirst -> transpose
+         )
+      |> L.map (H.tr [])
     )
+    
+colTable matrix = 
+  table (\defaultParams ->
+    { defaultParams
+    | headerAttrs = [ A.class "header-cell" ]
+    , bodyAttrs = [ A.class "body-cell" ]
+    , orientation = ColFirst
+    , matrix = matrix
+    }
+  )
+

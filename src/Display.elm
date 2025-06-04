@@ -33,7 +33,7 @@ type alias Model = Result D.Error DisplayModel
 init : () -> ( Model, Cmd Msg )
 init _ =
   ( Ok 
-      { activeTab = 1
+      { activeTab = 0
       , textFields = Dict.singleton "teext" ""
       , date = Date.epoch
       , nCombatRows = 0
@@ -75,14 +75,11 @@ calendarView info =
            )
         ) 
       )
-    , [ [ h2[] [text "Weather: "], h2[] [text <| getTextField "weather" info ]]
-      , [ h2[] [text "Location: "], h2[] [text <| getTextField "location" info ]]
-      ]
-      |> U.transpose
-      |> List.map (div [ class "flex-column" ])
-      |> div [ class "flex-row" ]
+    , U.colTable
+        [ [ text "Weather:", text "Location:" ]
+        , [ text <| getTextField "weather" info , text <| getTextField "location" info ]
+        ]
     ]
-
 
 combatView: DisplayModel -> Html Never
 combatView info =
@@ -92,21 +89,14 @@ combatView info =
   in
     div [ class "flex-column" ]
       [ h2 [] [ text "Combat" ]
-      , U.table (\defaultParams ->
-          { defaultParams
-          | headerWrap = th []
-          , cellAttrs = [ class "bordered-cell" ]
-          , header = 
-            [ text "Character"
-            , text "AC"
-            ]
-          , rows = 
-            List.range 1 info.nCombatRows |> List.map (\i ->
-              [ text <| indexedGet "name" i
-              , text <| indexedGet "AC" i
-              ]
-            )
-          }
+      , U.colTable (
+          List.range 1 info.nCombatRows 
+          |> List.map (\i ->
+             [ text <| indexedGet "name" i ++ ":"
+             , text <| indexedGet "AC" i
+             ]
+          )
+          |> U.transpose
         )
       ]
 
