@@ -85,23 +85,38 @@ aloneInside container item =
 wrapWith containers item =
   List.foldr aloneInside item containers
 
-table :  
+type alias TableParams msg =
     { headerWrap: (List (Html msg) -> Html msg)
     , bodyWrap: (List (Html msg) -> Html msg) 
-    , attributes: List (Attribute msg) 
+    , tableAttrs: List (Attribute msg) 
+    , rowAttrs: List (Attribute msg) 
+    , cellAttrs: List (Attribute msg) 
+    , header: List (Html msg)
     , rows: List (List (Html msg))
     }
-    -> Html msg
-table args =
-  H.table args.attributes
-  <| L.indexedMap (\i row ->
-     row
-     |> L.map (
-        wrapWith
-          [ H.td [] 
-          , if i == 0 then args.headerWrap else args.bodyWrap
-          ]
-     )
-     |> H.tr []
-  ) args.rows
 
+table : (TableParams msg -> TableParams msg) -> Html msg
+table modify =
+  let 
+    defaultParams =
+      TableParams
+        (H.div[])
+        (H.div[])
+        []
+        []
+        []
+        []
+        []
+    args = modify defaultParams
+    makeRowCells wrap contents =
+      contents
+      |> L.map (
+         wrapWith [ H.td args.cellAttrs, wrap ]
+      )
+  in
+    H.table args.tableAttrs (
+      makeRowCells args.headerWrap args.header
+      :: L.map (makeRowCells args.bodyWrap) args.rows
+      |> L.filter (not << List.isEmpty)
+      |> L.map (H.tr args.rowAttrs)
+    )

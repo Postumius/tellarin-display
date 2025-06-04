@@ -33,7 +33,7 @@ type alias Model = Result D.Error DisplayModel
 init : () -> ( Model, Cmd Msg )
 init _ =
   ( Ok 
-      { activeTab = 0
+      { activeTab = 1
       , textFields = Dict.singleton "teext" ""
       , date = Date.epoch
       , nCombatRows = 0
@@ -83,6 +83,7 @@ calendarView info =
       |> div [ class "flex-row" ]
     ]
 
+
 combatView: DisplayModel -> Html Never
 combatView info =
   let
@@ -91,22 +92,22 @@ combatView info =
   in
     div [ class "flex-column" ]
       [ h2 [] [ text "Combat" ]
-      , U.table 
-        { headerWrap = h2 []
-        , bodyWrap = h3 []
-        , attributes = []
-        , rows = 
-          [ text "Character"
-          , text "AC"
-          ]
-          :: (
-             List.range 1 info.nCombatRows |> List.map (\i ->
-               [ text <| indexedGet "name" i
-               , text <| indexedGet "AC" i
-               ]
-             )
-          )
-        }
+      , U.table (\defaultParams ->
+          { defaultParams
+          | headerWrap = th []
+          , cellAttrs = [ class "bordered-cell" ]
+          , header = 
+            [ text "Character"
+            , text "AC"
+            ]
+          , rows = 
+            List.range 1 info.nCombatRows |> List.map (\i ->
+              [ text <| indexedGet "name" i
+              , text <| indexedGet "AC" i
+              ]
+            )
+          }
+        )
       ]
 
 displayView : Result D.Error DisplayModel -> Html Never
