@@ -50,7 +50,10 @@ init _ =
     , focusedDenom = Nothing
     , denomBuffer = ""
     }
-  , Cmd.none)
+  , [("cmdString", E.string "load")]
+    |> E.object
+    |> elmSender
+  )
 
 type Msg 
   = SwitchTo Tab
@@ -59,12 +62,9 @@ type Msg
   | FocusDenom Int
   | BlurDenom (Date -> Date)
   | GotDenomInput String
-  | Save
-  | RequestLoad
   | ReceivedLoad D.Value
   | ChangeNRows (Int -> Int)
-  | Show
-  | Hide
+  | MainCommand String
 
 port elmSender : E.Value -> Cmd msg
 
@@ -73,29 +73,20 @@ port elmReceiver : (D.Value -> msg) -> Sub msg
 subscriptions _ = elmReceiver ReceivedLoad
 
 
-
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
   let
     out encode m = (m, m |> encode |> elmSender)
     sendToDisplay = out (encodeWithCmd "send")
     noOp m = (m, Cmd.none)
-    command str = 
-      [("cmdString", E.string str)]
-      |> E.object
-      |> elmSender
   in
     case msg of
+      MainCommand cmdStr ->
+        model
+        |> out (encodeWithCmd cmdStr)
       ChangeDate f ->
         {model | date = model.date |> f} 
         |> sendToDisplay
-      Save ->
-        model 
-        |> out (encodeWithCmd "save")
-      RequestLoad -> 
-        ( model
-        , command "load"
-        )
       ReceivedLoad json -> 
         model
         |> mergeLoaded json
@@ -122,11 +113,6 @@ update msg model =
       ChangeNRows f -> 
         { model | nCombatRows = Basics.max 0 <| f model.nCombatRows }
         |> sendToDisplay
-      Show ->
-        (model, command "show")
-      Hide ->
-        (model, command "hide")
-
 
 encodeWithCmd : String -> Model -> E.Value
 encodeWithCmd cmdString model = 
@@ -169,22 +155,32 @@ getTextField key model =
 
 view : Model -> Html Msg
 view model = 
-  div [] 
-    [ button [ onClick Save ] [ text "save" ]
-    , button [ onClick RequestLoad ] [ text "load" ]
-    , button [ onClick Show ] [ text "show" ]
-    , button [ onClick Hide ] [ text "hide" ]
-    , input 
-        [ placeholder "enter teext"
-        , value <| getTextField "teext" model
-        , onInput <| GotTextFor "teext" 
-        ] []
-    , hr [] [] 
-    , makeTabView model
-      [ ("Calendar", calenderView)
-      , ("Combat", combatView)
-      ]
-    ]
+  let 
+    commandButtons cmdStrs =
+      cmdStrs
+      |> L.map (\cmdStr ->
+         button [ onClick <| MainCommand cmdStr ] [ text cmdStr ]
+      )
+  in
+    div [] 
+      <| commandButtons 
+         [ "save"
+         , "load"
+         , "show"
+         , "hide"
+         , "save and quit"
+         ]
+      ++ [ input 
+             [ placeholder "enter teext"
+             , value <| getTextField "teext" model
+             , onInput <| GotTextFor "teext" 
+             ] []
+         , hr [] [] 
+         , makeTabView model
+           [ ("Calendar", calenderView)
+           , ("Combat", combatView)
+           ]
+         ]
 
 textField name model = 
   input 
@@ -302,5 +298,6 @@ combatView model =
   , button [ onClick (ChangeNRows U.inc) ] [ text "add row" ]
   , button [ onClick (ChangeNRows U.dec) ] [ text "remove row" ]
   ] 
-  ++ (L.range 1 model.nCombatRows |> L.map (combatRow model))
+  ++ (L.range 1 model.nCombatRows 
+  |> L.map (combatRow model))
   |> div []

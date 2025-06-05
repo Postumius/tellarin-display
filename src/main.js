@@ -25,15 +25,19 @@ async function createWindows() {
     }
   });
 
+  function save(obj) {
+    fs.writeFile(savefilePath, JSON.stringify(obj), err => {
+      if (err) console.error(err);
+    });
+  }
+
   ipcMain.on('controls-send', (_event, obj) => {
     switch (obj.cmdString) {
       case "send":
         displayWin.webContents.send('display-receive', obj);
         break;
       case "save":
-        fs.writeFile(savefilePath, JSON.stringify(obj), err => {
-          if (err) console.error(err);
-        });
+	save(obj);
         break;
       case "load":
         fs.readFile(savefilePath, 'utf8', (err, data) => {
@@ -49,6 +53,10 @@ async function createWindows() {
         break;
       case "hide":
         displayWin.hide();
+        break;
+      case "save and quit":
+	save(obj);
+	app.quit();
         break;
     }
   });

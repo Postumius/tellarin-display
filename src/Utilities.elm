@@ -57,20 +57,34 @@ toList stream =
     Cons x xsP -> x :: toList (xsP())
 
 transpose : List (List a) -> List (List a)
-transpose = 
-  List.foldr (mapWithList (::)) (repeat []) >>
-  toList
+transpose matrix = 
+  L.foldr
+    (L.map2 (::))
+    ( matrix
+      |> L.map L.length
+      |> L.minimum
+      |> Maybe.withDefault 0
+      |> flip L.repeat []
+    )
+    matrix
 
-rectangularise filler lists =
-  let 
-    lengths = List.map List.length lists
-    maxLength = lengths |> L.maximum |> Maybe.withDefault 0
-  in
-    List.map2 (\row length ->
-      row ++ 
-      L.repeat (maxLength - length) filler
-    ) lists lengths
-
+--   if List.isEmpty ls
+--   then []
+--   else
+--     ls
+--     |> List.foldr (mapWithList (::)) (repeat [])
+--     |> toList
+-- 
+-- rectangularise filler lists =
+--   let 
+--     lengths = List.map List.length lists
+--     maxLength = lengths |> L.maximum |> Maybe.withDefault 0
+--   in
+--     List.map2 (\row length ->
+--       row ++ 
+--       L.repeat (maxLength - length) filler
+--     ) lists lengths
+-- 
 inc n = n + 1
 
 dec n = n - 1
