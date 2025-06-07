@@ -5,6 +5,13 @@ module Utilities exposing
 import List as L
 import Html as H exposing (Html, Attribute)
 import Html.Attributes as A
+import Dict as D exposing (Dict)
+
+nTimes : Int -> (a -> a) -> a -> a
+nTimes n f acc =
+  if n <= 0
+  then acc
+  else nTimes (n-1) f (f acc)
 
 foldrP : (a -> (() -> b) -> b) -> b -> List a -> b
 foldrP f bottom xxs =
@@ -91,6 +98,14 @@ dec n = n - 1
 
 minus n m = m - n
 
+-- insertWith: (a->a->a) -> k -> a -> Dict k a -> Dict k a
+-- insertWith f k newVal dict =
+--   D.update (
+--     Maybe.map (f newVal) 
+--     >> Maybe.withDefault newVal
+--     >> Just
+--   ) dict
+-- 
 aloneInside container item = 
   item 
   |> L.singleton 

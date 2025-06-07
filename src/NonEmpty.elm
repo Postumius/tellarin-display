@@ -4,10 +4,13 @@ import Json.Encode as E
 import Json.Decode as D exposing (Decoder)
 
 import Utilities as U
+-- import NonZero as NZ exposing ( NonZero(..) )
 
 type NonEmpty a = NE a (List a)
 
 head (NE x _) = x
+
+tail (NE x xs) = xs
 
 toList (NE x xs) = x::xs
 
@@ -31,6 +34,13 @@ map2 f (NE x xs) (NE y ys) = NE (f x y) (List.map2 f xs ys)
 indexedMap f (NE x xs)= 
   NE (f 0 x) (List.indexedMap ((+)1 >> f) xs)
 
+-- take : NonZero -> NE a -> NE a
+-- take n xs =
+--   case (n, xs) of
+--     (One, NE x _) -> singleton x
+--     (_, NE x [] -> singleton x
+--     (Inc m, NE x0 (x1::xs)) -> cons x0 take m (NE x1 xs)
+-- 
 search pred = 
   foldl (\x acc -> 
     if pred x then Just x else acc

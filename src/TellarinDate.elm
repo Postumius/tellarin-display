@@ -3,12 +3,14 @@ module TellarinDate exposing
   , dayNames
   , Date
   , Base (..)
+  , baseNumber
   , DenomModifier
   , TimeDenomination
   , get
   , startGetter
   , startSetter
   , toString
+  , baseDenominations
   , denoms
   , epoch
   , plus
@@ -41,6 +43,11 @@ minutesPerHour = 60
 type Date = Date (NonEmpty Int)
 
 type Base = Names (List String) | Number Int
+
+baseNumber base =
+  case base of
+    Names ls -> List.length ls
+    Number n -> n
 
 type alias TimeDenomination =
   { name: String
