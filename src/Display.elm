@@ -6,6 +6,7 @@ import Html.Attributes exposing (class)
 import Json.Decode as D
 import Maybe
 import Dict exposing (Dict)
+import Array as Arr exposing (Array)
 
 import Controls exposing (..)
 import Utilities as U
@@ -24,7 +25,8 @@ type alias DisplayModel =
   { textFields : Dict Key String
   , activeTab : Int
   , date : Date
-  , nCombatRows: Int
+  , combatRows : Array (Array String)
+  , nVisibleRows: Int
   }
 
 
@@ -36,7 +38,8 @@ init _ =
       { activeTab = 0
       , textFields = Dict.singleton "teext" ""
       , date = Date.epoch
-      , nCombatRows = 0
+      , combatRows = Arr.empty
+      , nVisibleRows = 0
       }
   , Cmd.none
   )
@@ -84,16 +87,22 @@ calendarView info =
 combatView: DisplayModel -> Html Never
 combatView info =
   let
+    getText i = 
+      Arr.get i
+      >> Maybe.withDefault ""
+      >> text
     indexedGet str i = 
       getTextField (str ++ String.fromInt i) info
   in
     div [ class "flex-column" ]
       [ h2 [] [ text "Combat" ]
       , U.colTable (
-          List.range 1 info.nCombatRows 
-          |> List.map (\i ->
-             [ text <| indexedGet "name" i ++ ":"
-             , text <| indexedGet "AC" i
+          info.combatRows
+          |> Arr.toList
+          |> List.take info.nVisibleRows
+          |> List.map (\row ->
+             [ getText 0 row
+             , getText 1 row
              ]
           )
           |> U.transpose

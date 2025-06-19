@@ -13,6 +13,7 @@ import Json.Encode as E
 import Json.Decode as D
 import Dict exposing (Dict)
 import List as L 
+import Array as Arr exposing (Array)
 
 import Utilities as U
 import TellarinDate as Date exposing (Date)
@@ -32,11 +33,15 @@ type alias Key = String
 type alias Model =
   { focusedDenom : Maybe Int
   , denomBuffer : String
+  -- , backup : Backup
   , textFields : Dict Key String
   , activeTab : Tab
   , date : Date
-  , nCombatRows : Int
+  , combatRows : Array (Array String)
+  , nVisibleRows : Int
   }
+
+-- type Backup = Backup (List Model)
 
 init : () -> ( Model, Cmd msg )
 init _ =
@@ -46,9 +51,11 @@ init _ =
         [ ("teext", "")
         ]
     , date = Date.epoch
-    , nCombatRows = 0
+    , combatRows = Arr.empty
+    , nVisibleRows = 0
     , focusedDenom = Nothing
     , denomBuffer = ""
+    -- , backup = Backup []
     }
   , [("cmdString", E.string "load")]
     |> E.object
@@ -63,8 +70,11 @@ type Msg
   | BlurDenom (Date -> Date)
   | GotDenomInput String
   | ReceivedLoad D.Value
-  | ChangeNRows (Int -> Int)
   | MainCommand String
+  | EditCombatCell Int Int String
+  | EditUltCell Int String
+  | DeleteCombatRows Int
+  | MoveCurtain (Int -> Int)
 
 port elmSender : E.Value -> Cmd msg
 
@@ -79,6 +89,8 @@ update msg model =
     out encode m = (m, m |> encode |> elmSender)
     sendToDisplay = out (encodeWithCmd "send")
     noOp m = (m, Cmd.none)
+    trimBlanks =
+      U.dropBackWhile ((==) blankRow)
   in
     case msg of
       MainCommand cmdStr ->
@@ -110,9 +122,48 @@ update msg model =
       GotDenomInput str ->
         { model | denomBuffer = str } 
         |> noOp
-      ChangeNRows f -> 
-        { model | nCombatRows = Basics.max 0 <| f model.nCombatRows }
+      MoveCurtain f -> 
+        { model 
+        | nVisibleRows = 
+          f model.nVisibleRows 
+          |> Basics.min (Arr.length model.combatRows)
+          |> Basics.max 0 
+        }
         |> sendToDisplay
+      EditCombatCell i j input -> 
+        { model 
+        | combatRows = 
+          model.combatRows 
+          |> U.tryGetSet (Arr.get i) (Arr.set i) (Arr.set j input)
+          |> trimBlanks
+        }
+        |> sendToDisplay
+      EditUltCell j input ->
+        { model
+        | combatRows = 
+          model.combatRows
+          |> Arr.push (Arr.set j input blankRow)
+          |> trimBlanks
+        }
+        |> sendToDisplay
+      DeleteCombatRows n -> 
+        let 
+          newLength = 
+            model.combatRows
+            |> Arr.length
+            |> U.minus (Basics.max n 0)
+            |> Basics.max 0
+        in
+          { model
+          | combatRows = 
+            model.combatRows 
+            |> Arr.slice 0 newLength
+          , nVisibleRows = Basics.min model.nVisibleRows newLength
+          }
+          |> sendToDisplay
+
+
+blankRow = Arr.repeat 2 ""
 
 encodeWithCmd : String -> Model -> E.Value
 encodeWithCmd cmdString model = 
@@ -121,17 +172,19 @@ encodeWithCmd cmdString model =
     , ("date", Date.encode model.date)
     , ("activeTab", E.int model.activeTab)
     , ("textFields", E.dict identity E.string model.textFields)
-    , ("nCombatRows", E.int model.nCombatRows)
+    , ("combatRows", E.array (E.array E.string) model.combatRows)
+    , ("nVisibleRows", E.int model.nVisibleRows)
     ]
 
 decode constructor =
   let
     dInfo =
-      D.map4 constructor
+      D.map5 constructor
         (D.field "textFields" <| D.dict D.string)
         (D.field "activeTab" D.int)
         (D.field "date" Date.decoder)
-        (D.field "nCombatRows" D.int)
+        (D.field "combatRows" <| D.array <| D.array D.string)
+        (D.field "nVisibleRows" D.int)
   in
     D.decodeValue dInfo
 
@@ -273,31 +326,54 @@ calenderView model =
       ]
     ]
 
-combatRow model i=
-  let 
-    suffix str = str ++ String.fromInt i
-    name = suffix "name"
-    ac = suffix "AC"
-  in
-    div []
-      [ input 
-          [ placeholder "Enemy Name"
-          , value <| getTextField name model
-          , onInput <| GotTextFor name
-          ] []
-        , input 
-            [ placeholder "Enemy AC"
-            , value <| getTextField ac model
-            , onInput <| GotTextFor ac
-            ] []
-      ]
-
 combatView : Model -> Html Msg
 combatView model =
-  [ h2 [] [ text "Combat" ]
-  , button [ onClick (ChangeNRows U.inc) ] [ text "add row" ]
-  , button [ onClick (ChangeNRows U.dec) ] [ text "remove row" ]
-  ] 
-  ++ (L.range 1 model.nCombatRows 
-  |> L.map (combatRow model))
-  |> div []
+  let 
+    nRows = Arr.length model.combatRows
+    combatCell isVisible sendMsg row default j =
+      input 
+        [ placeholder default
+        , value <| (
+            row
+            |> Arr.get j
+            |> Maybe.withDefault ""
+          )
+        , onInput <| sendMsg j
+        , class <| if isVisible then "visible-row" else "hidden-row"
+        ] []
+    assembleRow cell =
+      div []
+        [ cell "Enemy Name" 0 
+        , cell "Enemy AC" 1
+        ]
+  in
+    div [] (
+      [ h2 [] [ text "Combat" ]
+      , div []
+        [ button [ onClick (DeleteCombatRows 1) ] [ text "delete 1" ]
+        , button 
+          [ onClick (DeleteCombatRows nRows) ] 
+          [ text "delete all" ]
+        ]
+      , div []
+        [ button [ onClick (MoveCurtain U.inc) ] [ text "reveal 1" ]
+        , button [ onClick (MoveCurtain U.dec) ] [ text "hide 1" ]
+        , button 
+          [ onClick (MoveCurtain <| U.minus model.nVisibleRows >> (+) nRows) ]
+          [ text "reveal all" ]
+        , button 
+          [ onClick (MoveCurtain <| U.minus model.nVisibleRows) ]
+          [ text "hide all" ]
+        ]
+      ] 
+      ++ (
+         model.combatRows
+         |> Arr.indexedMap (\i row ->
+            assembleRow
+            <| combatCell (i < model.nVisibleRows) (EditCombatCell i) row
+         )
+         |> Arr.toList
+      )
+      ++ [ assembleRow <| combatCell False EditUltCell blankRow ]
+    )
+

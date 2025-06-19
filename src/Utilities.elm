@@ -6,6 +6,7 @@ import List as L
 import Html as H exposing (Html, Attribute)
 import Html.Attributes as A
 import Dict as D exposing (Dict)
+import Array as Arr exposing (Array)
 
 nTimes : Int -> (a -> a) -> a -> a
 nTimes n f acc =
@@ -44,6 +45,13 @@ getSet getter setter f obj =
   f |>
   flip setter obj
   
+tryGetSet getter setter f obj =
+  obj
+  |> getter
+  |> Maybe.map (f >> setter)
+  |> Maybe.withDefault identity
+  |> (|>) obj
+
 type alias Promise a = () -> a
 
 type Stream a
@@ -92,6 +100,70 @@ transpose matrix =
 --       L.repeat (maxLength - length) filler
 --     ) lists lengths
 -- 
+
+maybe : b -> (a->b) -> Maybe a -> b
+maybe default f = 
+  Maybe.map f
+  >> Maybe.withDefault default
+
+filter : (a -> Bool) -> Maybe a -> Maybe a
+filter pred mb =
+  mb
+  |> Maybe.andThen (\x ->
+     if pred x then Just x else Nothing
+  )
+
+pop : Array a -> Maybe (Array a, a)
+pop arr = 
+  arr
+  |> Arr.get (Arr.length arr - 1)
+  |> Maybe.map (\last -> (Arr.slice 0 -1 arr, last))
+
+dropBackWhile : (a -> Bool) -> Array a -> Array a
+dropBackWhile pred arr = 
+  arr
+  |> pop
+  |> filter (Tuple.second >> pred)
+  |> maybe arr (Tuple.first >> dropBackWhile pred)
+
+delete : Int -> Array a -> Array a
+delete i arr =
+  let 
+    left =
+      Arr.slice 0 i arr
+    right =
+      Arr.slice (i+1) (Arr.length arr) arr
+  in Arr.append left right
+
+
+type Lens s t a b =
+  Lens
+    { getter: s -> a
+    , setter: b -> s -> t
+    }
+
+aL = 
+  Lens
+    { getter = .a
+    , setter = \x obj -> { obj | a = x }
+    }
+
+bL = 
+  Lens
+    { getter = .b
+    , setter = \x obj -> { obj | b = x }
+    }
+
+view (Lens {getter}) obj = getter obj
+
+set (Lens {setter}) x obj = setter x obj
+
+firstL =
+  Lens
+   { getter = Tuple.first
+   , setter = \newA (a, b) -> (newA, b)
+   }
+
 inc n = n + 1
 
 dec n = n - 1
