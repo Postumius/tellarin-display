@@ -1,12 +1,13 @@
 {
   "name": "tellarindisplay",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "elm make .\\src\\Controls.elm --output elm-compiled\\controls.js && elm make .\\src\\Display.elm --output elm-compiled\\display.js && electron-forge start",
     "test": "echo \"Error: no test specified\" && exit 1",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "publish": "electron-forge publish"
   },
   "author": "Noa Ma",
   "license": "ISC",
@@ -19,10 +20,12 @@
     "@electron-forge/maker-zip": "^7.8.1",
     "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
     "@electron-forge/plugin-fuses": "^7.8.1",
+    "@electron-forge/publisher-github": "^7.8.1",
     "@electron/fuses": "^1.8.0",
     "electron": "^35.2.1"
   },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.1"
+    "electron-squirrel-startup": "^1.0.1",
+    "update-electron-app": "^3.1.1"
   }
 }

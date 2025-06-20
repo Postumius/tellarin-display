@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain } = require('electron/main')
-const path = require('node:path')
-const fs = require ('node:fs')
+require('update-electron-app')();
+const { app, BrowserWindow, ipcMain } = require('electron/main');
+const path = require('node:path');
+const fs = require ('node:fs');
 
 
 const preloadPath = path.join(__dirname, 'preload.js');
