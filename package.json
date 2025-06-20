@@ -1,6 +1,6 @@
 {
   "name": "tellarindisplay",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "main": "src/main.js",
   "scripts": {
     "start": "elm make .\\src\\Controls.elm --output elm-compiled\\controls.js && elm make .\\src\\Display.elm --output elm-compiled\\display.js && electron-forge start",
