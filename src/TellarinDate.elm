@@ -25,6 +25,7 @@ import Tuple as Tup
 import Dict as Dict exposing (Dict)
 
 import Utilities as U
+import Utilities.Function as FU
 import NonEmpty as NE exposing (NonEmpty(..))
 
 seasonNames = ["Seed", "Harvest", "Scorch", "Frost"]
@@ -95,7 +96,7 @@ denomsIndex =
 get name date = 
   denomsIndex 
   |> Dict.get name
-  |> Maybe.andThen (U.flip NE.get denoms)
+  |> Maybe.andThen (FU.flip NE.get denoms)
   |> Maybe.map (.getter >> (|>) date)
 
 startGetter denom = denom.getter >> (+) denom.startAt
@@ -142,7 +143,7 @@ toString (Date ne) =
     ++ d "season"
     ++ ", "
     ++ d "year"
-    ++ " YoR, "
+    ++ " yor, "
     ++ padWithZeros (d "hour")
     ++ ":"
     ++ padWithZeros (d "minute")

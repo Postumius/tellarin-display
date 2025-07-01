@@ -7,12 +7,10 @@ import Html as H exposing (Html, Attribute)
 import Html.Attributes as A
 import Dict as D exposing (Dict)
 import Array as Arr exposing (Array)
+import Maybe as M
 
-nTimes : Int -> (a -> a) -> a -> a
-nTimes n f acc =
-  if n <= 0
-  then acc
-  else nTimes (n-1) f (f acc)
+import Utilities.Function as FU
+import Utilities.Maybe as MU
 
 foldrP : (a -> (() -> b) -> b) -> b -> List a -> b
 foldrP f bottom xxs =
@@ -34,16 +32,12 @@ search pred = searchWithIndex (\_ x -> pred x)
 -- getWithDefault : Int -> a -> List a -> a
 -- getWithDefault i dflt = get i >> Maybe.withDefault dflt
 
-flip f a b = f b a
-
-uncurry f (a, b) = f a b
-
 getSet : (obj -> a) -> (a -> obj -> obj) -> (a -> a) -> obj -> obj
 getSet getter setter f obj = 
   obj |> 
   getter |> 
   f |>
-  flip setter obj
+  FU.flip setter obj
   
 tryGetSet getter setter f obj =
   obj
@@ -79,7 +73,7 @@ transpose matrix =
       |> L.map L.length
       |> L.minimum
       |> Maybe.withDefault 0
-      |> flip L.repeat []
+      |> FU.flip L.repeat []
     )
     matrix
 
@@ -101,11 +95,6 @@ transpose matrix =
 --     ) lists lengths
 -- 
 
-maybe : b -> (a->b) -> Maybe a -> b
-maybe default f = 
-  Maybe.map f
-  >> Maybe.withDefault default
-
 filter : (a -> Bool) -> Maybe a -> Maybe a
 filter pred mb =
   mb
@@ -124,7 +113,7 @@ dropBackWhile pred arr =
   arr
   |> pop
   |> filter (Tuple.second >> pred)
-  |> maybe arr (Tuple.first >> dropBackWhile pred)
+  |> MU.maybe arr (Tuple.first >> dropBackWhile pred)
 
 delete : Int -> Array a -> Array a
 delete i arr =
@@ -235,3 +224,7 @@ colTable matrix =
     }
   )
 
+aif it ifF thenF elseF =
+  if ifF it
+  then thenF it
+  else elseF it

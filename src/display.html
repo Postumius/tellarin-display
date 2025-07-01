@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -12,33 +12,58 @@
       content="default-src 'self'; script-src 'self' 'unsafe-inline'"
     />
     <style>
+      @font-face {
+        font-family: cinzel-reg;
+        src: url(../fonts/Cinzel_Decorative/CinzelDecorative-Regular.ttf);
+      }
+      @font-face {
+        font-family: cinzel-black;
+        src: url(../fonts/Cinzel_Decorative/CinzelDecorative-Black.ttf);
+      }
+      @font-face {
+        font-family: cinzel-bold;
+        src: url(../fonts/Cinzel_Decorative/CinzelDecorative-Bold.ttf);
+      }
+      html {
+        background-color: #80c9c2;
+        font-family: cinzel-reg;
+      }
+      h1 {
+        font-family: cinzel-bold;
+      }
+      h2 {
+        font-family: cinzel-bold;
+      }
+      h3 {
+        font-family: cinzel-bold;
+      }
       .flex-row {
         display: flex;
         flex-direction: row;
-	justify-content: space-evenly;
-	column-gap: 20px
+        justify-content: space-evenly;
+        column-gap: 20px
       }
       .flex-column {
-	font-size: xx-large;
+        font-size: xx-large;
         display: flex;
         flex-direction: column;
-	align-items: center;
+        align-items: center;
         justify-content: space-around;
       }
       .stretch-item {
-	align-self: stretch;
+        align-self: stretch;
       }
       table {
-	border-collapse: collapse;
+        border-collapse: collapse;
       }
       .header-cell {
-	padding: 10px;
-	text-align: end;
-	font-weight: bold;
+        padding: 10px;
+        text-align: end;
+        font-weight: bold;
       }
       .body-cell {
-	padding: 10px;
-	text-align: start;
+        padding: 10px;
+        text-align: start;
       }
     </style>
     <title>Display</title>

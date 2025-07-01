@@ -24,6 +24,7 @@ async function createWindows() {
   const displayWin = new BrowserWindow({
     width: 800,
     height: 600,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: preloadPath
     }
