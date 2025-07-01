@@ -3,7 +3,7 @@ module NonEmpty exposing (..)
 import Json.Encode as E
 import Json.Decode as D exposing (Decoder)
 
-import Utilities as U
+import Utilities.Function as FU
 -- import NonZero as NZ exposing ( NonZero(..) )
 
 type NonEmpty a = NE a (List a)
@@ -18,7 +18,7 @@ foldli : (a->b) -> (a->b->b) -> NonEmpty a -> b
 foldli init recur (NE x xs) =
   List.foldl recur (init x) xs
 
-foldl recur acc = foldli (U.flip recur acc) recur
+foldl recur acc = foldli (FU.flip recur acc) recur
 
 singleton x = NE x []
 

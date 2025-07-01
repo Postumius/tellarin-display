@@ -95,7 +95,7 @@ combatView info =
       getTextField (str ++ String.fromInt i) info
   in
     div [ class "flex-column" ]
-      [ h2 [] [ text "Combat" ]
+      [ h1 [] [ text "Combat" ]
       , U.colTable (
           info.combatRows
           |> Arr.toList
