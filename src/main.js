@@ -4,12 +4,13 @@ updateElectronApp();
 
 const { app, BrowserWindow, ipcMain } = require('electron/main');
 const path = require('node:path');
+const homedir = require('os').homedir();
 const fs = require ('node:fs');
 
 
 const preloadPath = path.join(__dirname, 'preload.js');
 
-const savefilePath = path.join(__dirname, '../../save-data.json');
+const savefilePath = path.join(homedir, 'save-data.json');
 
 
 async function createWindows() {
