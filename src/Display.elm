@@ -70,7 +70,7 @@ calendarView info =
       ( Date.dayNames 
         |> List.indexedMap (\i day ->
            text (day) 
-           |> U.aloneInside (h3 [])
+           |> U.aloneInside (h3 [class "stretch-item"])
            |> U.aloneInside (
               if Just i == Date.get "day" info.date
               then mark []
