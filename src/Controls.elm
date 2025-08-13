@@ -57,7 +57,7 @@ init _ =
     , denomBuffer = ""
     -- , backup = Backup []
     }
-  , [("cmdString", E.string "load")]
+  , [("cmdString", E.string "reload")]
     |> E.object
     |> elmSender
   )
@@ -75,6 +75,16 @@ type Msg
   | EditUltCell Int String
   | DeleteCombatRows Int
   | MoveCurtain (Int -> Int)
+
+mainCommands =
+ [ "save"
+ , "save as"
+ , "load"
+ , "reload"
+ , "show"
+ , "hide"
+ , "save and quit"
+ ]
 
 port elmSender : E.Value -> Cmd msg
 
@@ -216,13 +226,7 @@ view model =
       )
   in
     div [] 
-      <| commandButtons 
-         [ "save"
-         , "load"
-         , "show"
-         , "hide"
-         , "save and quit"
-         ]
+      <| commandButtons mainCommands
       ++ [ input 
              [ placeholder "enter teext"
              , value <| getTextField "teext" model

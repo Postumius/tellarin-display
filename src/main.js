@@ -2,7 +2,7 @@ const { updateElectronApp } = require('update-electron-app');
 updateElectronApp();
 
 
-const { app, BrowserWindow, ipcMain } = require('electron/main');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron/main');
 const path = require('node:path');
 const homedir = require('os').homedir();
 const fs = require ('node:fs');
@@ -10,8 +10,18 @@ const fs = require ('node:fs');
 
 const preloadPath = path.join(__dirname, 'preload.js');
 
-const savefilePath = path.join(homedir, 'save-data.json');
+const metaSavePath = path.join(homedir, 'meta-save.json');
 
+let savePath = '';
+
+function setSavePath(path) {
+  if (path != savePath && path != '') {
+    savePath = path;
+    fs.writeFile(metaSavePath, savePath, err => {
+      if (err) console.error(err);
+    });
+  }
+}
 
 async function createWindows() {
   const controlsWin = new BrowserWindow({
@@ -31,9 +41,37 @@ async function createWindows() {
     }
   });
 
-  function save(obj) {
-    fs.writeFile(savefilePath, JSON.stringify(obj), err => {
-      if (err) console.error(err);
+  function save(pickFile, obj) {
+    //console.log(obj);
+    let temp = savePath;
+    if (pickFile || savePath === '') {
+      temp = dialog.showSaveDialogSync();
+    }
+    fs.writeFile(temp, JSON.stringify(obj), err => {
+      if (err) {
+        console.error(err);
+      } else {
+        setSavePath(temp);
+      }
+    });
+  }
+
+  function load(pickFile) {
+    let temp = savePath;
+    if (pickFile || savePath === '') {
+      temp =
+        dialog.showOpenDialogSync({
+          properties: ['openFile'],
+        }) ?. at(0) || '';
+    }
+    fs.readFile(temp, 'utf8', (err, data) => {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log(data);
+        controlsWin.webContents.send('controls-receive', JSON.parse(data));
+        setSavePath(temp);
+      }
     });
   }
 
@@ -43,16 +81,16 @@ async function createWindows() {
         displayWin.webContents.send('display-receive', obj);
         break;
       case "save":
-	save(obj);
+        save(false, obj);
         break;
+      case "save as":
+        save(true, obj);
+        break
       case "load":
-        fs.readFile(savefilePath, 'utf8', (err, data) => {
-          if (err) {
-	    console.error(err);
-	  } else {
-	  controlsWin.webContents.send('controls-receive', JSON.parse(data));
-	  }
-        });
+        load(true);
+        break;
+      case "reload":
+        load(false);
         break;
       case "show":
         displayWin.show();
@@ -61,14 +99,23 @@ async function createWindows() {
         displayWin.hide();
         break;
       case "save and quit":
-	save(obj);
-	app.quit();
+        save(false, obj);
+        app.quit();
         break;
     }
   });
 
   controlsWin.loadFile('src/controls.html');
   displayWin.loadFile('src/display.html');
+
+  fs.readFile(metaSavePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+    } else {
+      savePath = data;
+    }
+  });
+
 }
 
 
