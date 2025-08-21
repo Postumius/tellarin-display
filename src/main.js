@@ -18,7 +18,11 @@ function setSavePath(path) {
   if (path != savePath && path != '') {
     savePath = path;
     fs.writeFile(metaSavePath, savePath, err => {
-      if (err) console.error(err);
+      if (err) {
+        console.error(err);
+      } else {
+        console.log(metaSavePath);
+      }
     });
   }
 }
@@ -114,6 +118,10 @@ async function createWindows() {
 
   controlsWin.loadFile('src/controls.html');
   displayWin.loadFile('src/display.html');
+}
+
+
+app.whenReady().then(() => {
 
   fs.readFile(metaSavePath, 'utf8', (err, data) => {
     if (err) {
@@ -123,10 +131,6 @@ async function createWindows() {
     }
   });
 
-}
-
-
-app.whenReady().then(() => {
   createWindows();
 });
 
