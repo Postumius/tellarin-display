@@ -42,18 +42,21 @@ async function createWindows() {
   });
 
   function save(pickFile, obj) {
-    //console.log(obj);
     let temp = savePath;
     if (pickFile || savePath === '') {
       temp = dialog.showSaveDialogSync();
     }
-    fs.writeFile(temp, JSON.stringify(obj), err => {
-      if (err) {
-        console.error(err);
-      } else {
-        setSavePath(temp);
-      }
-    });
+    if (temp === '') {
+      console.log("cancelling save operation");
+    } else {
+      fs.writeFile(temp, JSON.stringify(obj), err => {
+        if (err) {
+          console.error(err);
+        } else {
+          setSavePath(temp);
+        }
+      });
+    }
   }
 
   function load(pickFile) {
@@ -64,15 +67,19 @@ async function createWindows() {
           properties: ['openFile'],
         }) ?. at(0) || '';
     }
-    fs.readFile(temp, 'utf8', (err, data) => {
-      if (err) {
-        console.error(err);
-      } else {
-        console.log(data);
-        controlsWin.webContents.send('controls-receive', JSON.parse(data));
-        setSavePath(temp);
-      }
-    });
+    if (temp === '') {
+      console.log("cancelling load operation");
+    } else {
+      fs.readFile(temp, 'utf8', (err, data) => {
+        if (err) {
+          console.error(err);
+        } else {
+          console.log(data);
+          controlsWin.webContents.send('controls-receive', JSON.parse(data));
+          setSavePath(temp);
+        }
+      });
+    }
   }
 
   ipcMain.on('controls-send', (_event, obj) => {
