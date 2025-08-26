@@ -65,7 +65,7 @@ async function createWindows() {
 
   function load(pickFile) {
     let temp = savePath;
-    if (pickFile || savePath === '') {
+    if (pickFile) { //|| savePath === '') {
       temp =
         dialog.showOpenDialogSync({
           properties: ['openFile'],
