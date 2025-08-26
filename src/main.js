@@ -10,7 +10,7 @@ const fs = require ('node:fs');
 
 const preloadPath = path.join(__dirname, 'preload.js');
 
-const metaSavePath = path.join(homedir, 'meta-save.json');
+const metaSavePath = path.join(homedir, 'tellarin-meta-save.json');
 
 let savePath = '';
 
