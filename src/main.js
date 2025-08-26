@@ -50,7 +50,7 @@ async function createWindows() {
     if (pickFile || savePath === '') {
       temp = dialog.showSaveDialogSync();
     }
-    if (temp === '') {
+    if (temp === '' || temp === undefined) {
       console.log("cancelling save operation");
     } else {
       fs.writeFile(temp, JSON.stringify(obj), err => {
